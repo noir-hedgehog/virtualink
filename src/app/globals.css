@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --lofi-warm: #e8d5c4;
+  --lofi-brown: #8b7355;
+  --lofi-dark: #2d2420;
+  --lofi-cream: #f5efe6;
+  --lofi-accent: #c4a77d;
+}
+
+body {
+  @apply bg-lofi-dark text-lofi-cream antialiased;
+}
+
+/* 主场景背景渐变（可被壁纸覆盖） */
+.scene-bg {
+  background: linear-gradient(180deg, #3d3229 0%, #2d2420 50%, #1a1614 100%);
+}
+
+/* 立绘呼吸 / 待机动画（模拟 Live2D 基础效果） */
+@keyframes character-breathe {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(1.02) translateY(-2px);
+  }
+}
+
+.character-stand {
+  animation: character-breathe 4s ease-in-out infinite;
+}

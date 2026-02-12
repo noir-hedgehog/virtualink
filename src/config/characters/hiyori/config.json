@@ -1,0 +1,16 @@
+{
+  "id": "hiyori",
+  "name": "Hiyori",
+  "intro": "Live2D 示例角色 Hiyori。",
+  "defaultStand": "",
+  "live2d": {
+    "modelPath": "/characters/hiyori/live2D/runtime/hiyori_free_t08.model3.json",
+    "motions": {
+      "idle": "Idle",
+      "tap_body": "Tap@Body",
+      "flick": "Flick"
+    }
+  },
+  "voice": null,
+  "lineKeys": []
+}
