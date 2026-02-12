@@ -125,7 +125,7 @@ export function CharacterView() {
             fill
             className="object-contain object-bottom pointer-events-none"
             sizes="50vw"
-            unoptimized={config.defaultStand.endsWith(".svg")}
+            unoptimized
             draggable={false}
             onDragStart={(e) => e.preventDefault()}
           />
