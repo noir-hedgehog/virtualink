@@ -1,0 +1,56 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="64" height="64" fill="#1a1a2e"/>
+
+  <!-- 背景和桌子 -->
+  <rect x="8" y="40" width="48" height="16" fill="#4a4a5c"/>
+
+  <!-- 电脑屏幕 -->
+  <rect x="18" y="24" width="28" height="20" fill="#a0a0b2"/>
+  <rect x="20" y="26" width="24" height="16" fill="#000000"/>
+  <!-- 屏幕内容：代码或文字 -->
+  <rect x="22" y="28" width="8" height="2" fill="#00ff00"/>
+  <rect x="22" y="32" width="12" height="2" fill="#00ff00"/>
+  <rect x="22" y="36" width="6" height="2" fill="#00ff00"/>
+
+  <!-- Vtuber 身体 -->
+  <rect x="36" y="30" width="8" height="10" fill="#d2b48c"/> <!-- 身体部分，调整为更自然的肤色 -->
+  <rect x="38" y="20" width="6" height="10" fill="#d2b48c"/> <!-- 头部 -->
+
+  <!-- Vtuber 头发 (黑色主色，紫色挑染) -->
+  <rect x="36" y="18" width="10" height="4" fill="#202020"/> <!-- 黑色发顶 -->
+  <rect x="34" y="22" width="2" height="6" fill="#202020"/> <!-- 黑色侧发 -->
+  <rect x="46" y="22" width="2" height="6" fill="#202020"/> <!-- 黑色侧发 -->
+  <rect x="36" y="20" width="2" height="2" fill="#8a2be2"/> <!-- 紫色挑染 -->
+  <rect x="38" y="22" width="2" height="2" fill="#8a2be2"/> <!-- 紫色挑染 -->
+
+  <!-- Vtuber 耳朵/发饰 (猫耳和紫色蝴蝶结) -->
+  <rect x="36" y="16" width="2" height="2" fill="#8a2be2"/> <!-- 左耳/发饰 -->
+  <rect x="44" y="16" width="2" height="2" fill="#8a2be2"/> <!-- 右耳/发饰 -->
+  <rect x="42" y="20" width="2" height="2" fill="#8a2be2"/> <!-- 紫色蝴蝶结/发夹 -->
+
+  <!-- Vtuber 眼睛 (参考原图的眼神) -->
+  <rect x="38" y="24" width="2" height="2" fill="#ffffff"/>
+  <rect x="42" y="24" width="2" height="2" fill="#ffffff"/>
+  <rect x="38" y="26" width="2" height="2" fill="#000000"/>
+  <rect x="42" y="26" width="2" height="2" fill="#000000"/>
+
+  <!-- Vtuber 黑色口罩 -->
+  <rect x="38" y="28" width="6" height="2" fill="#000000"/>
+
+  <!-- 衣服 (黑色主色，紫色装饰) -->
+  <rect x="36" y="30" width="8" height="6" fill="#202020"/> <!-- 黑色上衣 -->
+  <rect x="36" y="36" width="8" height="4" fill="#202020"/> <!-- 黑色下装 -->
+  <rect x="34" y="30" width="2" height="2" fill="#8a2be2"/> <!-- 左肩紫色装饰 -->
+  <rect x="44" y="30" width="2" height="2" fill="#8a2be2"/> <!-- 右肩紫色装饰 -->
+
+  <!-- Vtuber 手臂 (在键盘上) -->
+  <rect x="36" y="38" width="2" height="2" fill="#d2b48c"/>
+  <rect x="42" y="38" width="2" height="2" fill="#d2b48c"/>
+
+  <!-- 键盘 -->
+  <rect x="20" y="40" width="16" height="4" fill="#a0a0b2"/>
+
+  <!-- VirtuaLink 的“心形”或“链接”元素 (可选，可根据需要调整位置和大小) -->
+  <rect x="50" y="8" width="4" height="4" fill="#ff69b4"/> <!-- 简单的心形顶部 -->
+  <rect x="52" y="12" width="2" height="2" fill="#ff69b4"/> <!-- 心形底部 -->
+</svg>

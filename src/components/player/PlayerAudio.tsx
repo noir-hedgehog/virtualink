@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePlayerStore } from "@/stores/playerStore";
+import { getAssetUrl } from "@/lib/utils";
 
 export function PlayerAudio() {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -17,7 +18,7 @@ export function PlayerAudio() {
   const next = usePlayerStore((s) => s.next);
 
   const track = playlist[currentIndex];
-  const src = track?.url ?? "";
+  const src = track?.url ? getAssetUrl(track.url) : "";
 
   useEffect(() => {
     const el = audioRef.current;

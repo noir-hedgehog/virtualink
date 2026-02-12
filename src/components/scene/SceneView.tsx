@@ -1,6 +1,7 @@
 "use client";
 
 import { useSceneStore } from "@/stores/sceneStore";
+import { getAssetUrl } from "@/lib/utils";
 import { CharacterView } from "./CharacterView";
 import { CustomizeBar } from "./CustomizeBar";
 
@@ -18,14 +19,14 @@ export function SceneView() {
       {currentWallpaper?.url && (
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${currentWallpaper.url})` }}
+          style={{ backgroundImage: `url(${getAssetUrl(currentWallpaper.url)})` }}
         />
       )}
       {/* 场景遮罩/叠加（可选） */}
       {currentScene?.overlayUrl && (
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-90"
-          style={{ backgroundImage: `url(${currentScene.overlayUrl})` }}
+          style={{ backgroundImage: `url(${getAssetUrl(currentScene.overlayUrl)})` }}
         />
       )}
       {/* 角色层 */}

@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import Image from "next/image";
 import { useSceneStore } from "@/stores/sceneStore";
 import { getCharacterConfig } from "@/config/characters";
+import { getAssetUrl } from "@/lib/utils";
 import { Live2DViewer } from "./Live2DViewer";
 
 function getDisplayFromStore(
@@ -119,7 +120,7 @@ export function CharacterView() {
           onDragStart={(e) => e.preventDefault()}
         >
           <Image
-            src={config.defaultStand}
+            src={getAssetUrl(config.defaultStand)}
             alt={config.name}
             fill
             className="object-contain object-bottom pointer-events-none"

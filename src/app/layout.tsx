@@ -12,9 +12,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export const metadata: Metadata = {
   title: "VirtuaLink - 真实连结：与你相伴的日常",
   description: "Link with you ：番茄钟、Todo、日记、习惯，与你一起专注。",
+  icons: basePath ? { icon: `${basePath}/favicon.ico` } : undefined,
 };
 
 export default function RootLayout({

@@ -20,6 +20,7 @@ jobs:
     env:
       # 项目站地址为 https://<user>.github.io/<repo>/，BASE_PATH 填仓库名
       BASE_PATH: /${{ github.event.repository.name }}
+      NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
     steps:
       - uses: actions/checkout@v4
 

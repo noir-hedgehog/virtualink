@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { getAssetUrl } from "@/lib/utils";
 
 const CUBISM_CORE_URL =
   "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js";
@@ -76,7 +77,7 @@ export function Live2DViewer({
         ro = new ResizeObserver(resize);
         ro.observe(container);
 
-        model = await Live2DModel.from(modelPath, {
+        model = await Live2DModel.from(getAssetUrl(modelPath), {
           autoInteract: true,
         });
 
