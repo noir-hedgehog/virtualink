@@ -144,32 +144,36 @@ export function CharacterView() {
   };
 
   return (
-    <div className="absolute inset-0 flex items-end justify-center pointer-events-none">
-      <div className="pointer-events-auto flex flex-col items-center h-[85%] w-full max-w-[50%]">
-        <div
-          className={`relative h-full w-full flex items-end justify-center touch-none ${canAdjust ? "cursor-grab active:cursor-grabbing" : "cursor-default"}`}
-          style={wrapperStyle}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerLeave={(e) => {
-            if (drag && e.currentTarget.hasPointerCapture(e.pointerId)) {
-              const x = drag.baseX + (e.clientX - drag.startClientX);
-              const y = drag.baseY + (e.clientY - drag.startClientY);
-              setCharacterDisplay(characterId!, sceneId, { x, y });
-              setDrag(null);
-            }
-          }}
-        >
-          <div className="h-full w-full" style={{ minHeight: "60vh" }}>
-            {content}
+    <>
+      <div className="absolute inset-0 flex items-end justify-center pointer-events-none">
+        <div className="pointer-events-auto flex flex-col items-center h-[85%] w-full max-w-[50%]">
+          <div
+            className={`relative h-full w-full flex items-end justify-center touch-none ${canAdjust ? "cursor-grab active:cursor-grabbing" : "cursor-default"}`}
+            style={wrapperStyle}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerLeave={(e) => {
+              if (drag && e.currentTarget.hasPointerCapture(e.pointerId)) {
+                const x = drag.baseX + (e.clientX - drag.startClientX);
+                const y = drag.baseY + (e.clientY - drag.startClientY);
+                setCharacterDisplay(characterId!, sceneId, { x, y });
+                setDrag(null);
+              }
+            }}
+          >
+            <div className="h-full w-full" style={{ minHeight: "60vh" }}>
+              {content}
+            </div>
           </div>
         </div>
+      </div>
 
-        {canAdjust && (
+      {/* 角色调整工具栏：固定在顶部与时间/番茄钟同一行，避免被底部播放器挡住 */}
+      {canAdjust && (
         <div
           data-character-toolbar
-          className="mt-2 flex items-center gap-3 rounded-lg bg-lofi-dark/60 backdrop-blur-sm px-3 py-2 border border-lofi-cream/10"
+          className="fixed left-1/2 top-6 z-[60] flex -translate-x-1/2 items-center gap-3 rounded-xl border border-lofi-brown/20 bg-lofi-dark/60 px-3 py-2 shadow-lg backdrop-blur-sm"
         >
           <span className="text-lofi-cream/80 text-sm whitespace-nowrap">缩放</span>
           <input
@@ -192,8 +196,7 @@ export function CharacterView() {
             重置
           </button>
         </div>
-        )}
-      </div>
-    </div>
+      )}
+    </>
   );
 }
