@@ -2,14 +2,14 @@
 
 import { getCharacterConfig, getStories, listCharacters } from "@/config/characters";
 import { defaultScenes } from "@/config/scenes";
-import { APP_VERSION, UPDATE_NOTES } from "@/config/version";
+import { APP_VERSION, VERSION_HISTORY } from "@/config/version";
 import { getAssetUrl } from "@/lib/utils";
 import { isStandVideo } from "@/lib/standMedia";
 import { useLaunchStore, FIRST_MEET_STORY_ID } from "@/stores/launchStore";
 import { useSceneStore } from "@/stores/sceneStore";
 import { useStoryStore } from "@/stores/storyStore";
 import { isSceneStatic, isSceneVideo } from "@/types/scene";
-import { ChevronDown, Settings } from "lucide-react";
+import { ChevronDown, Settings, X } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -92,7 +92,7 @@ export function LaunchPage() {
     <div
       className="relative flex min-h-screen flex-col bg-lofi-dark"
       style={{
-        backgroundImage: `url(${launchBgUrl})`,
+        backgroundImage: `url(${launchBgUrl ?? getAssetUrl("/wallpapers/default-scene.svg")})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -118,27 +118,56 @@ export function LaunchPage() {
             </button>
             <button
               type="button"
-              onClick={() => setShowVersion((v) => !v)}
+              onClick={() => setShowVersion(true)}
               className="flex items-center gap-1 rounded-lg px-2 py-2 text-lofi-cream/70 hover:bg-white/10 hover:text-lofi-cream"
               title="版本与更新说明"
             >
               <span className="text-sm">v{APP_VERSION}</span>
-              <ChevronDown
-                className={cn("h-4 w-4 transition", showVersion && "rotate-180")}
-              />
+              <ChevronDown className="h-4 w-4" />
             </button>
           </div>
         </header>
 
         {showVersion && (
-          <div className="w-full max-w-lg rounded-xl border border-lofi-brown/30 bg-lofi-dark/90 p-4 text-sm text-lofi-cream/80 shadow-xl backdrop-blur-sm">
-            <p className="mb-2 font-medium text-lofi-cream">更新说明 v{APP_VERSION}</p>
-            <ul className="list-inside list-disc space-y-1 text-lofi-cream/70">
-              {UPDATE_NOTES.map((line, i) => (
-                <li key={i}>{line}</li>
-              ))}
-            </ul>
-          </div>
+          <>
+            <div
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+              onClick={() => setShowVersion(false)}
+              aria-hidden
+            />
+            <div
+              className="fixed left-1/2 top-1/2 z-50 w-[min(400px,calc(100vw-2rem))] max-h-[80vh] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border border-lofi-brown/30 bg-lofi-dark/95 shadow-2xl backdrop-blur-sm"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="version-modal-title"
+            >
+              <header className="flex shrink-0 items-center justify-between border-b border-lofi-brown/20 px-4 py-3">
+                <h2 id="version-modal-title" className="text-base font-medium text-lofi-cream">
+                  版本与更新说明
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowVersion(false)}
+                  className="rounded-lg p-1.5 text-lofi-cream/70 hover:bg-lofi-brown/20 hover:text-lofi-cream transition-colors"
+                  aria-label="关闭"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </header>
+              <div className="max-h-[calc(80vh-3.5rem)] overflow-y-auto p-4 space-y-5">
+                {VERSION_HISTORY.map((entry) => (
+                  <section key={entry.version}>
+                    <p className="mb-2 font-medium text-lofi-cream">v{entry.version}</p>
+                    <ul className="list-inside list-disc space-y-1 text-sm text-lofi-cream/70">
+                      {entry.notes.map((line, i) => (
+                        <li key={i}>{line}</li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            </div>
+          </>
         )}
 
         {showSettings && (
