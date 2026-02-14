@@ -10,6 +10,7 @@ import {
   Repeat,
   Repeat1,
   Volume2,
+  VolumeX,
   ListMusic,
 } from "lucide-react";
 import { usePlayerStore } from "@/stores/playerStore";
@@ -47,6 +48,7 @@ export function BottomBar() {
   const next = usePlayerStore((s) => s.next);
   const prev = usePlayerStore((s) => s.prev);
   const setVolume = usePlayerStore((s) => s.setVolume);
+  const toggleMute = usePlayerStore((s) => s.toggleMute);
   const cyclePlayMode = usePlayerStore((s) => s.cyclePlayMode);
   const seekTo = usePlayerStore((s) => s.seekTo);
   const setCurrentIndex = usePlayerStore((s) => s.setCurrentIndex);
@@ -232,10 +234,21 @@ export function BottomBar() {
           </div>
         </div>
 
-        {/* 右侧：音量，与进度条行右对齐 */}
+        {/* 右侧：音量，与进度条行右对齐；点击图标切换静音 */}
         <div className="flex flex-1 items-center justify-end">
           <div className="flex items-center gap-2 border-l border-lofi-brown/30 pl-2">
-            <Volume2 className="h-4 w-4 shrink-0 text-lofi-cream/60" />
+            <button
+              type="button"
+              onClick={() => toggleMute()}
+              className="p-1 rounded-lg text-lofi-cream/70 hover:text-lofi-cream transition-colors"
+              title={volume > 0 ? "静音" : "取消静音"}
+            >
+              {volume > 0 ? (
+                <Volume2 className="h-4 w-4 shrink-0" />
+              ) : (
+                <VolumeX className="h-4 w-4 shrink-0" />
+              )}
+            </button>
             <input
               type="range"
               min={0}

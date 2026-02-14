@@ -1,5 +1,5 @@
-import { MainLayout } from "@/components/layout/MainLayout";
+import { HomeGate } from "@/components/launch/HomeGate";
 
 export default function Home() {
-  return <MainLayout />;
+  return <HomeGate />;
 }

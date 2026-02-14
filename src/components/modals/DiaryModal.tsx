@@ -1,5 +1,6 @@
 "use client";
 
+import { triggerAchievementsAndIntimacy } from "@/lib/storyTrigger";
 import { useDiaryStore } from "@/stores/diaryStore";
 import { useState, useEffect } from "react";
 
@@ -19,6 +20,7 @@ export function DiaryContent() {
 
   const handleSave = () => {
     upsert(date, content);
+    triggerAchievementsAndIntimacy(5);
   };
 
   return (

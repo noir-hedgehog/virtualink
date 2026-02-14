@@ -4,6 +4,11 @@
   "intro": "学生会副会长，和你一起专注学习与工作。",
   "defaultStand": "/characters/miki/miki-test.png",
   "live2d": null,
-  "voice": null,
+  "voice": {
+    "pomodoro_pause": {
+      "url": "/characters/miki/voice/看压抑了吗.MP3",
+      "text": "看压抑了吗"
+    }
+  },
   "lineKeys": ["work_start", "work_break", "habit_done", "greeting", "goodbye"]
 }

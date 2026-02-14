@@ -1,5 +1,6 @@
 "use client";
 
+import { triggerAchievementsAndIntimacy } from "@/lib/storyTrigger";
 import { useTodoStore } from "@/stores/todoStore";
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -13,6 +14,7 @@ export function TodoContent() {
     if (t) {
       add(t);
       setNewTitle("");
+      triggerAchievementsAndIntimacy(2);
     }
   };
 

@@ -1,8 +1,9 @@
 "use client";
 
+import { triggerAchievementsAndIntimacy } from "@/lib/storyTrigger";
 import { useTodoStore } from "@/stores/todoStore";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function TodoPage() {
@@ -15,6 +16,7 @@ export default function TodoPage() {
     if (t) {
       add(t);
       setNewTitle("");
+      triggerAchievementsAndIntimacy(2);
     }
   };
 

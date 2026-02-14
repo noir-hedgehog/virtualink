@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { Lock, X } from "lucide-react";
+import { achievements } from "@/config/achievements";
+import { useAchievementStore } from "@/stores/achievementStore";
 import { useModalStore } from "@/stores/modalStore";
 import { useSceneStore } from "@/stores/sceneStore";
+import { useStoryStore } from "@/stores/storyStore";
 import { listCharacters } from "@/config/characters";
 import { cn } from "@/lib/utils";
 
@@ -93,12 +96,8 @@ export function BottomLeftPanel() {
           {panelId === "chat" && (
             <p className="text-lofi-cream/50 text-sm">与角色的聊天记录将在此显示，后续扩展。</p>
           )}
-          {panelId === "story" && (
-            <p className="text-lofi-cream/50 text-sm">剧情进度与节点将在此显示，后续扩展。</p>
-          )}
-          {panelId === "achievements" && (
-            <p className="text-lofi-cream/50 text-sm">成就与收集将在此显示，后续扩展。</p>
-          )}
+          {panelId === "story" && <StoryPanelContent />}
+          {panelId === "achievements" && <AchievementsPanelContent />}
         </div>
       </div>
     </>
@@ -126,6 +125,85 @@ function CharacterContent() {
           {c.name}
         </button>
       ))}
+    </div>
+  );
+}
+
+function StoryPanelContent() {
+  const characterId = useSceneStore((s) => s.currentCharacterId ?? "miki");
+  const getAllStories = useStoryStore((s) => s.getAllStories);
+  const isUnlocked = useStoryStore((s) => s.isUnlocked);
+  const openStory = useStoryStore((s) => s.openStory);
+
+  const list = getAllStories(characterId);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-lofi-cream/50 text-sm mb-1">已解锁可点击回看，未解锁为占位。</p>
+      <ul className="space-y-2">
+        {list.length === 0 ? (
+          <li className="py-4 text-center text-lofi-cream/50 text-sm">暂无剧情配置</li>
+        ) : (
+          list.map((s) => {
+            const unlocked = isUnlocked(characterId, s.id);
+            return (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  onClick={() => unlocked && openStory(characterId, s.id)}
+                  disabled={!unlocked}
+                  className={cn(
+                    "w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors text-sm",
+                    unlocked
+                      ? "border-lofi-brown/20 bg-lofi-dark/60 hover:bg-lofi-brown/20 text-lofi-cream"
+                      : "border-lofi-brown/10 bg-lofi-dark/30 cursor-not-allowed text-lofi-cream/50"
+                  )}
+                >
+                  {!unlocked && <Lock className="h-4 w-4 shrink-0" />}
+                  <span className="flex-1 font-medium">{unlocked ? s.title : "？？？"}</span>
+                  {unlocked && <span className="text-xs text-lofi-cream/60">可回看</span>}
+                </button>
+              </li>
+            );
+          })
+        )}
+      </ul>
+    </div>
+  );
+}
+
+function AchievementsPanelContent() {
+  const characterId = useSceneStore((s) => s.currentCharacterId ?? "miki");
+  const isUnlocked = useAchievementStore((s) => s.isUnlocked);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-lofi-cream/50 text-sm mb-1">当前角色成就；已解锁可查看详情。</p>
+      <ul className="space-y-2">
+        {achievements.map((a) => {
+          const unlocked = isUnlocked(characterId, a.id);
+          return (
+            <li key={a.id}>
+              <div
+                className={cn(
+                  "w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm",
+                  unlocked
+                    ? "border-lofi-brown/20 bg-lofi-dark/60 text-lofi-cream"
+                    : "border-lofi-brown/10 bg-lofi-dark/30 text-lofi-cream/50"
+                )}
+              >
+                {!unlocked && <Lock className="h-4 w-4 shrink-0" />}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">{unlocked ? a.name : "？？？"}</p>
+                  {unlocked && (
+                    <p className="text-xs text-lofi-cream/60 mt-0.5">{a.description}</p>
+                  )}
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

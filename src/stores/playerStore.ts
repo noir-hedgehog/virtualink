@@ -13,6 +13,8 @@ type PlayerState = {
   currentTime: number;
   duration: number;
   volume: number;
+  /** 点击静音时保存的音量，恢复时用 */
+  savedVolumeBeforeMute: number;
   playMode: PlayMode;
   /** 用户拖动进度条时设置，PlayerAudio 同步后清除 */
   pendingSeek: number | null;
@@ -23,6 +25,8 @@ type PlayerState = {
   setDuration: (d: number) => void;
   setVolume: (v: number) => void;
   setPlayMode: (m: PlayMode) => void;
+  /** 点击切换静音：当前有声音则静音并保存音量，当前静音则恢复之前音量 */
+  toggleMute: () => void;
   togglePlay: () => void;
   next: () => void;
   prev: () => void;
@@ -41,6 +45,7 @@ export const usePlayerStore = create<PlayerState>()(
       currentTime: 0,
       duration: 0,
       volume: 0.8,
+      savedVolumeBeforeMute: 0.8,
       playMode: "list",
       pendingSeek: null,
 
@@ -53,6 +58,13 @@ export const usePlayerStore = create<PlayerState>()(
       setVolume: (volume) => set({ volume: Math.max(0, Math.min(1, volume)) }),
       setPlayMode: (playMode) => set({ playMode }),
 
+      toggleMute: () =>
+        set((s) => {
+          if (s.volume > 0) {
+            return { volume: 0, savedVolumeBeforeMute: s.volume };
+          }
+          return { volume: s.savedVolumeBeforeMute };
+        }),
       togglePlay: () => set((s) => ({ isPlaying: !s.isPlaying })),
 
       next: () => {
@@ -111,13 +123,19 @@ export const usePlayerStore = create<PlayerState>()(
       name: "chillmxmk-player",
       partialize: (state) => ({
         volume: state.volume,
+        savedVolumeBeforeMute: state.savedVolumeBeforeMute,
         playMode: state.playMode,
       }),
       merge: (persisted, current) => {
-        const p = persisted as Partial<{ volume: number; playMode: PlayMode }> | undefined;
+        const p = persisted as Partial<{
+          volume: number;
+          savedVolumeBeforeMute: number;
+          playMode: PlayMode;
+        }> | undefined;
         return {
           ...current,
           volume: p?.volume ?? current.volume,
+          savedVolumeBeforeMute: p?.savedVolumeBeforeMute ?? current.savedVolumeBeforeMute,
           playMode: p?.playMode ?? current.playMode,
         };
       },

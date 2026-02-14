@@ -1,8 +1,9 @@
 "use client";
 
+import { triggerAchievementsAndIntimacy } from "@/lib/storyTrigger";
 import { useDiaryStore } from "@/stores/diaryStore";
-import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 function todayStr() {
@@ -23,6 +24,7 @@ export default function DiaryPage() {
 
   const handleSave = () => {
     upsert(date, content);
+    triggerAchievementsAndIntimacy(5);
   };
 
   return (

@@ -1,6 +1,9 @@
 "use client";
 
+import { triggerAchievementsAndIntimacy } from "@/lib/storyTrigger";
+import { usePlayVoice } from "@/lib/voice";
 import { Play, Pause } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { usePomodoroStore } from "@/stores/pomodoroStore";
 import { useClockTick } from "@/stores/uiStore";
 
@@ -29,8 +32,28 @@ export function FloatingPomodoro() {
     setRestMinutes,
   } = usePomodoroStore();
 
+  const prevPhaseRef = useRef<"work" | "rest">("work");
+  useEffect(() => {
+    const now = phase;
+    const prev = prevPhaseRef.current;
+    prevPhaseRef.current = now;
+    if (prev === "work" && now === "rest") {
+      triggerAchievementsAndIntimacy(3);
+    }
+  }, [phase]);
+
   const display = formatTime(remainingSeconds);
   const label = phase === "work" ? "工作中" : "休息中";
+  const playVoice = usePlayVoice();
+
+  const handlePlayPause = () => {
+    if (isRunning) {
+      pause();
+      playVoice("pomodoro_pause");
+    } else {
+      start();
+    }
+  };
 
   return (
     <div className={`absolute right-6 top-6 flex items-stretch gap-4 px-4 py-3 ${floatPanelClass}`}>
@@ -74,7 +97,7 @@ export function FloatingPomodoro() {
         <span className="font-mono text-xl font-medium text-lofi-cream tabular-nums">{display}</span>
         <button
           type="button"
-          onClick={() => (isRunning ? pause() : start())}
+          onClick={handlePlayPause}
           className="flex items-center justify-center rounded-lg bg-lofi-accent/50 px-3 py-1.5 text-lofi-cream hover:bg-lofi-accent/70 transition-colors"
           aria-label={isRunning ? "暂停" : "开始"}
         >

@@ -1,6 +1,8 @@
 "use client";
 
 import { SceneView } from "../scene/SceneView";
+import { StoryCallPrompt } from "../story/StoryCallPrompt";
+import { StoryPlayer } from "../story/StoryPlayer";
 import { BottomBar } from "./BottomBar";
 import { FloatingTime } from "../floating/FloatingTime";
 import { FloatingPomodoro } from "../floating/FloatingPomodoro";
@@ -9,11 +11,17 @@ import { Widgets } from "../widgets/Widgets";
 import { SettingsModal } from "../modals/SettingsModal";
 import { BottomLeftPanel } from "../floating/BottomLeftPanel";
 import { PlayerAudio } from "../player/PlayerAudio";
+import { VoicePlayer } from "../voice/VoicePlayer";
+import { SubtitleBar } from "../voice/SubtitleBar";
 
 export function MainLayout() {
   return (
     <div className="flex h-screen flex-col">
       <PlayerAudio />
+      <VoicePlayer />
+      <SubtitleBar />
+      <StoryPlayer />
+      <StoryCallPrompt />
       <Widgets />
       <SettingsModal />
       <BottomLeftPanel />

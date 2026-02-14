@@ -1,8 +1,9 @@
 "use client";
 
+import { triggerAchievementsAndIntimacy } from "@/lib/storyTrigger";
 import { useHabitsStore } from "@/stores/habitsStore";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 function todayStr() {
@@ -68,7 +69,10 @@ export default function HabitsPage() {
             >
               <button
                 type="button"
-                onClick={() => toggleCheck(habit.id, today)}
+                onClick={() => {
+                toggleCheck(habit.id, today);
+                triggerAchievementsAndIntimacy(2);
+              }}
                 className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
                 style={{
                   borderColor: habit.color,
