@@ -1,26 +1,30 @@
 "use client";
 
-import { getStories, listCharacters } from "@/config/characters";
+import { getCharacterConfig, getStories, listCharacters } from "@/config/characters";
 import { APP_VERSION, UPDATE_NOTES } from "@/config/version";
 import { getAssetUrl } from "@/lib/utils";
 import { useLaunchStore, FIRST_MEET_STORY_ID } from "@/stores/launchStore";
 import { useSceneStore } from "@/stores/sceneStore";
 import { useStoryStore } from "@/stores/storyStore";
-import { ChevronDown, Link2, Settings } from "lucide-react";
-import { useState } from "react";
+import { ChevronDown, Settings } from "lucide-react";
+import Image from "next/image";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const LAUNCH_BG = "/wallpapers/background-test.png";
+const RIPPLE_DURATION_MS = 900;
 
 export function LaunchPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showVersion, setShowVersion] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [rippleProgress, setRippleProgress] = useState(0);
+  const pendingCharacterIdRef = useRef<string>("miki");
   const completeLaunch = useLaunchStore((s) => s.completeLaunch);
   const characters = listCharacters();
 
-  const handleLinkStart = () => {
-    const characterId = selectedId ?? characters[0]?.id ?? "miki";
+  const commitLinkStart = useCallback((characterId: string) => {
     const isFirstTime = completeLaunch(characterId);
     useSceneStore.getState().setCharacter(characterId);
     const hasFirstMeet = getStories(characterId).some((s) => s.id === FIRST_MEET_STORY_ID);
@@ -31,6 +35,38 @@ export function LaunchPage() {
         storyId: FIRST_MEET_STORY_ID,
       });
     }
+  }, [completeLaunch]);
+
+  useEffect(() => {
+    if (!isTransitioning) return;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / RIPPLE_DURATION_MS, 1);
+      const easeOut = 1 - (1 - t) ** 2;
+      setRippleProgress(easeOut);
+      if (t < 1) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        commitLinkStart(pendingCharacterIdRef.current);
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [isTransitioning, commitLinkStart]);
+
+  const handleLinkStart = () => {
+    const characterId = selectedId ?? characters[0]?.id ?? "miki";
+    pendingCharacterIdRef.current = characterId;
+    setIsTransitioning(true);
+  };
+
+  const selectedConfig = selectedId ? getCharacterConfig(selectedId) : null;
+  const standUrl = selectedConfig?.defaultStand ? getAssetUrl(selectedConfig.defaultStand) : null;
+
+  const rippleOverlayStyle: React.CSSProperties = {
+    WebkitMaskImage: `radial-gradient(circle at 50% 50%, transparent 0%, transparent ${rippleProgress * 150}%, black ${rippleProgress * 150}%)`,
+    maskImage: `radial-gradient(circle at 50% 50%, transparent 0%, transparent ${rippleProgress * 150}%, black ${rippleProgress * 150}%)`,
   };
 
   return (
@@ -44,9 +80,8 @@ export function LaunchPage() {
     >
       <div className="absolute inset-0 bg-black/50" />
       <div className="relative flex flex-1 flex-col items-center justify-between p-6 pb-10 pt-12">
-        <header className="flex w-full max-w-lg items-center justify-between">
-          <h1 className="text-xl font-medium text-lofi-cream/90">VirtuaLink</h1>
-          <div className="flex items-center gap-2">
+        <header className="flex w-full max-w-lg items-start justify-between gap-4">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={() => setShowSettings((v) => !v)}
@@ -66,6 +101,12 @@ export function LaunchPage() {
                 className={cn("h-4 w-4 transition", showVersion && "rotate-180")}
               />
             </button>
+          </div>
+          <div className="flex flex-col items-end text-right">
+            <h1 className="font-pixel text-lg leading-tight text-lofi-cream/95 md:text-xl">
+              VirtuaLink
+            </h1>
+            <p className="mt-1.5 text-xs text-lofi-cream/60">真实连结：与你相伴的日常</p>
           </div>
         </header>
 
@@ -89,6 +130,19 @@ export function LaunchPage() {
 
         <div className="flex w-full max-w-lg flex-col items-center gap-6">
           <div className="w-full">
+            {selectedId && standUrl && (
+              <div className="mb-4 flex justify-center">
+                <div className="character-stand relative h-[240px] w-[min(180px,36vw)] max-w-[180px] select-none">
+                  <Image
+                    src={standUrl}
+                    alt={selectedConfig?.name ?? ""}
+                    fill
+                    className="object-contain object-bottom"
+                    unoptimized
+                  />
+                </div>
+              </div>
+            )}
             <p className="mb-3 text-center text-sm text-lofi-cream/70">选择连线角色</p>
             <div className="flex flex-wrap justify-center gap-3">
               {characters.map((c) => (
@@ -112,13 +166,21 @@ export function LaunchPage() {
           <button
             type="button"
             onClick={handleLinkStart}
-            className="flex items-center gap-2 rounded-2xl bg-lofi-accent/80 px-8 py-4 text-lg font-medium text-lofi-dark shadow-lg transition hover:bg-lofi-accent"
+            disabled={isTransitioning}
+            className="rounded-2xl bg-lofi-accent/80 px-8 py-4 text-lg font-medium text-lofi-dark shadow-lg transition hover:bg-lofi-accent disabled:opacity-70 disabled:pointer-events-none"
           >
-            <Link2 className="h-5 w-5" />
             Link Start
           </button>
         </div>
       </div>
+
+      {isTransitioning && (
+        <div
+          className="pointer-events-none fixed inset-0 z-50 bg-black"
+          style={rippleOverlayStyle}
+          aria-hidden
+        />
+      )}
     </div>
   );
 }
