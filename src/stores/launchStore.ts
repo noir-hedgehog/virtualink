@@ -13,6 +13,8 @@ type LaunchState = {
   metCharacterIds: string[];
   /** 完成启动并进入主应用；返回该角色是否首次连线（需触发初次见面剧情） */
   completeLaunch: (characterId: string) => boolean;
+  /** 退出到启动页（由转场动画结束后调用） */
+  exitToLaunchPage: () => void;
 };
 
 export const useLaunchStore = create<LaunchState>()(
@@ -32,6 +34,7 @@ export const useLaunchStore = create<LaunchState>()(
         });
         return isFirstTime;
       },
+      exitToLaunchPage: () => set({ launchCompleted: false }),
     }),
     { name: "chillmxmk-launch" }
   )

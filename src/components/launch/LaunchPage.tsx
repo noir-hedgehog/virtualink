@@ -3,6 +3,7 @@
 import { getCharacterConfig, getStories, listCharacters } from "@/config/characters";
 import { APP_VERSION, UPDATE_NOTES } from "@/config/version";
 import { getAssetUrl } from "@/lib/utils";
+import { isStandVideo } from "@/lib/standMedia";
 import { useLaunchStore, FIRST_MEET_STORY_ID } from "@/stores/launchStore";
 import { useSceneStore } from "@/stores/sceneStore";
 import { useStoryStore } from "@/stores/storyStore";
@@ -81,6 +82,13 @@ export function LaunchPage() {
       <div className="absolute inset-0 bg-black/50" />
       <div className="relative flex flex-1 flex-col items-center justify-between p-6 pb-10 pt-12">
         <header className="flex w-full max-w-lg items-start justify-between gap-4">
+          <div className="flex flex-col">
+            <h1 className="font-pixel text-lg leading-tight md:text-xl">
+              <span className="text-lofi-cream/95">Virtua</span>
+              <span className="text-lofi-purple-deep">Link</span>
+            </h1>
+            <p className="mt-1.5 text-sm text-lofi-cream/60">真实连结：与你相伴的日常</p>
+          </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
@@ -101,12 +109,6 @@ export function LaunchPage() {
                 className={cn("h-4 w-4 transition", showVersion && "rotate-180")}
               />
             </button>
-          </div>
-          <div className="flex flex-col items-end text-right">
-            <h1 className="font-pixel text-lg leading-tight text-lofi-cream/95 md:text-xl">
-              VirtuaLink
-            </h1>
-            <p className="mt-1.5 text-xs text-lofi-cream/60">真实连结：与你相伴的日常</p>
           </div>
         </header>
 
@@ -132,14 +134,30 @@ export function LaunchPage() {
           <div className="w-full">
             {selectedId && standUrl && (
               <div className="mb-4 flex justify-center">
-                <div className="character-stand relative h-[240px] w-[min(180px,36vw)] max-w-[180px] select-none">
-                  <Image
-                    src={standUrl}
-                    alt={selectedConfig?.name ?? ""}
-                    fill
-                    className="object-contain object-bottom"
-                    unoptimized
-                  />
+                <div
+                  className={cn(
+                    "character-stand relative h-[240px] w-[min(180px,36vw)] max-w-[180px] select-none",
+                    isStandVideo(selectedConfig?.defaultStand ?? "") && "bg-transparent"
+                  )}
+                >
+                  {isStandVideo(selectedConfig?.defaultStand ?? "") ? (
+                    <video
+                      src={standUrl}
+                      className="h-full w-full object-contain object-bottom bg-transparent"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                    />
+                  ) : (
+                    <Image
+                      src={standUrl}
+                      alt={selectedConfig?.name ?? ""}
+                      fill
+                      className="object-contain object-bottom"
+                      unoptimized
+                    />
+                  )}
                 </div>
               </div>
             )}

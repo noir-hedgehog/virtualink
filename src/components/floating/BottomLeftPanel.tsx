@@ -7,7 +7,7 @@ import { useAchievementStore } from "@/stores/achievementStore";
 import { useModalStore } from "@/stores/modalStore";
 import { useSceneStore } from "@/stores/sceneStore";
 import { useStoryStore } from "@/stores/storyStore";
-import { listCharacters } from "@/config/characters";
+import { getCharacterConfig } from "@/config/characters";
 import { cn } from "@/lib/utils";
 
 const PANEL_IDS = ["character", "chat", "story", "achievements"] as const;
@@ -105,26 +105,28 @@ export function BottomLeftPanel() {
 }
 
 function CharacterContent() {
-  const { currentCharacterId, setCharacter } = useSceneStore();
-  const characters = listCharacters();
+  const currentCharacterId = useSceneStore((s) => s.currentCharacterId);
+  const current = currentCharacterId ? getCharacterConfig(currentCharacterId) : null;
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {characters.map((c) => (
-        <button
-          key={c.id}
-          type="button"
-          onClick={() => setCharacter(c.id)}
-          className={cn(
-            "rounded-lg border-2 px-4 py-2 text-sm transition-colors",
-            currentCharacterId === c.id
-              ? "border-lofi-accent bg-lofi-accent/20 text-lofi-cream"
-              : "border-lofi-brown/40 text-lofi-cream/80 hover:border-lofi-brown/60"
+    <div className="flex flex-col gap-4">
+      {current ? (
+        <div className="rounded-xl border border-lofi-brown/20 bg-lofi-dark/40 p-3 text-sm">
+          <p className="font-medium text-lofi-cream mb-2">{current.name}</p>
+          {(current.age ?? current.birthday ?? current.zodiac) && (
+            <p className="text-lofi-cream/60 text-xs mb-2 space-x-2">
+              {current.age && <span>{current.age}</span>}
+              {current.birthday && <span>· {current.birthday}</span>}
+              {current.zodiac && <span>· {current.zodiac}</span>}
+            </p>
           )}
-        >
-          {c.name}
-        </button>
-      ))}
+          <p className="text-lofi-cream/80 leading-relaxed whitespace-pre-line">
+            {current.intro}
+          </p>
+        </div>
+      ) : (
+        <p className="text-lofi-cream/50 text-sm">未选择角色</p>
+      )}
     </div>
   );
 }

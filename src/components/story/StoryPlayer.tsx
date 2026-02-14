@@ -1,7 +1,8 @@
 "use client";
 
 import { getCharacterConfig } from "@/config/characters";
-import { getAssetUrl } from "@/lib/utils";
+import { getAssetUrl, cn } from "@/lib/utils";
+import { isStandVideo } from "@/lib/standMedia";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useStoryStore } from "@/stores/storyStore";
 import { isStoryGalgame, isStoryVideo } from "@/types/story";
@@ -185,14 +186,30 @@ function GalgameStoryPlayer({
 
       <div className={`flex flex-1 items-end ${positionClass} p-4 pb-32`}>
         {standUrl && (
-          <div className="character-stand relative h-[70vh] max-h-[480px] w-auto max-w-[45%] aspect-[2/3] select-none">
-            <Image
-              src={standUrl}
-              alt={config?.name ?? ""}
-              fill
-              className="object-contain object-bottom"
-              unoptimized
-            />
+          <div
+            className={cn(
+              "character-stand relative h-[70vh] max-h-[480px] w-auto max-w-[45%] aspect-[2/3] select-none",
+              config?.defaultStand && isStandVideo(config.defaultStand) && "bg-transparent"
+            )}
+          >
+            {config?.defaultStand && isStandVideo(config.defaultStand) ? (
+              <video
+                src={standUrl}
+                className="h-full w-full object-contain object-bottom bg-transparent"
+                autoPlay
+                loop
+                muted
+                playsInline
+              />
+            ) : (
+              <Image
+                src={standUrl}
+                alt={config?.name ?? ""}
+                fill
+                className="object-contain object-bottom"
+                unoptimized
+              />
+            )}
           </div>
         )}
       </div>

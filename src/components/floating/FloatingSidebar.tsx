@@ -9,6 +9,7 @@ import {
   Settings,
   Phone,
 } from "lucide-react";
+import { useExitTransitionStore } from "@/stores/exitTransitionStore";
 import { useModalStore } from "@/stores/modalStore";
 import { useWidgetStore } from "@/stores/widgetStore";
 import { cn } from "@/lib/utils";
@@ -45,7 +46,11 @@ export function FloatingSidebar() {
           key={id}
           type="button"
           onClick={() => {
-            if (id === "exit" || id === "hide") return;
+            if (id === "hide") return;
+            if (id === "exit") {
+              useExitTransitionStore.getState().startExit();
+              return;
+            }
             if (isWidget) {
               openWidget(id as WidgetId);
             } else {

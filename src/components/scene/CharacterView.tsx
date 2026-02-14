@@ -4,7 +4,8 @@ import { useCallback, useState } from "react";
 import Image from "next/image";
 import { useSceneStore } from "@/stores/sceneStore";
 import { getCharacterConfig } from "@/config/characters";
-import { getAssetUrl } from "@/lib/utils";
+import { getAssetUrl, cn } from "@/lib/utils";
+import { isStandVideo } from "@/lib/standMedia";
 import { Live2DViewer } from "./Live2DViewer";
 
 function getDisplayFromStore(
@@ -111,7 +112,10 @@ export function CharacterView() {
         </div>
       ) : config.defaultStand ? (
         <div
-          className="relative h-full w-full max-w-[50%] aspect-[2/3] character-stand select-none"
+          className={cn(
+            "relative h-full w-full max-w-[50%] aspect-[2/3] character-stand select-none",
+            isStandVideo(config.defaultStand) && "bg-transparent"
+          )}
           style={{
             minWidth: 0,
             userSelect: "none",
@@ -119,16 +123,28 @@ export function CharacterView() {
           }}
           onDragStart={(e) => e.preventDefault()}
         >
-          <Image
-            src={getAssetUrl(config.defaultStand)}
-            alt={config.name}
-            fill
-            className="object-contain object-bottom pointer-events-none"
-            sizes="50vw"
-            unoptimized
-            draggable={false}
-            onDragStart={(e) => e.preventDefault()}
-          />
+          {isStandVideo(config.defaultStand) ? (
+            <video
+              src={getAssetUrl(config.defaultStand)}
+              className="h-full w-full object-contain object-bottom pointer-events-none bg-transparent"
+              autoPlay
+              loop
+              muted
+              playsInline
+              draggable={false}
+            />
+          ) : (
+            <Image
+              src={getAssetUrl(config.defaultStand)}
+              alt={config.name}
+              fill
+              className="object-contain object-bottom pointer-events-none"
+              sizes="50vw"
+              unoptimized
+              draggable={false}
+              onDragStart={(e) => e.preventDefault()}
+            />
+          )}
         </div>
       ) : (
         <div className="flex h-full max-w-[50%] items-center justify-center text-lofi-cream/50 text-sm">

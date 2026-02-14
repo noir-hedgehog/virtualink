@@ -15,6 +15,7 @@ const config: Config = {
           dark: "#2d2420",
           cream: "#f5efe6",
           accent: "#c4a77d",
+          "purple-deep": "#3d2463",
         },
       },
       fontFamily: {

@@ -1,5 +1,6 @@
 "use client";
 
+import { ExitTransitionOverlay } from "../launch/ExitTransitionOverlay";
 import { SceneView } from "../scene/SceneView";
 import { StoryCallPrompt } from "../story/StoryCallPrompt";
 import { StoryPlayer } from "../story/StoryPlayer";
@@ -22,6 +23,7 @@ export function MainLayout() {
       <SubtitleBar />
       <StoryPlayer />
       <StoryCallPrompt />
+      <ExitTransitionOverlay />
       <Widgets />
       <SettingsModal />
       <BottomLeftPanel />
