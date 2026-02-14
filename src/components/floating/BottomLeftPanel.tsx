@@ -176,7 +176,7 @@ function StandSettingsContent() {
   const setStandIndex = useSceneStore((s) => s.setStandIndex);
   const config = currentCharacterId ? getCharacterConfig(currentCharacterId) : null;
 
-  if (!config) {
+  if (!currentCharacterId || !config) {
     return <p className="text-lofi-cream/50 text-sm">未选择角色</p>;
   }
   const stands = config.stands?.length ? config.stands : (config.defaultStand ? [config.defaultStand] : []);
