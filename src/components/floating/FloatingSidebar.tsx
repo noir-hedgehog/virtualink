@@ -45,6 +45,7 @@ export function FloatingSidebar() {
   const openModal = useModalStore((s) => s.openModal);
   const open = useModalStore((s) => s.open);
   const openWidget = useWidgetStore((s) => s.openWidget);
+  const closeWidget = useWidgetStore((s) => s.closeWidget);
   const widgets = useWidgetStore((s) => s.widgets);
   const characterStandVisible = useSceneStore((s) => s.characterStandVisible);
   const setCharacterStandVisible = useSceneStore((s) => s.setCharacterStandVisible);
@@ -89,8 +90,13 @@ export function FloatingSidebar() {
               return;
             }
             if (isWidget) {
-              if (id === "calendar") playVoice("calendar_open");
-              openWidget(id as WidgetId);
+              const widgetId = id as WidgetId;
+              if (isWidgetVisible(id)) {
+                closeWidget(widgetId);
+              } else {
+                if (id === "calendar") playVoice("calendar_open");
+                openWidget(widgetId);
+              }
             } else {
               open(id);
             }

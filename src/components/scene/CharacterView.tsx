@@ -16,11 +16,10 @@ const RANDOM_TAP_PROB = 0.35;
 
 function getDisplayFromStore(
   characterDisplay: Record<string, { x?: number; y?: number; scale?: number }>,
-  characterId: string | null,
-  sceneId: string
+  characterId: string | null
 ): { x: number; y: number; scale: number } {
   if (!characterId) return { x: 0, y: 0, scale: 1 };
-  const key = `${characterId}|${sceneId}`;
+  const key = characterId;
   const raw = characterDisplay[key];
   return {
     x: Number(raw?.x) || 0,
@@ -37,7 +36,7 @@ export function CharacterView() {
   const setCharacterDisplay = useSceneStore((s) => s.setCharacterDisplay);
   const getStandIndex = useSceneStore((s) => s.getStandIndex);
 
-  const display = getDisplayFromStore(characterDisplay, characterId, sceneId);
+  const display = getDisplayFromStore(characterDisplay, characterId);
   const config = characterId ? getCharacterConfig(characterId) : null;
   const effectiveStand =
     config?.stands?.length
