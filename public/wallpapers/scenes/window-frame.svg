@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="frame" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3d3632;stop-opacity:0.95" />
+      <stop offset="100%" style="stop-color:#1a1614;stop-opacity:0.98" />
+    </linearGradient>
+  </defs>
+  <!-- 窗框：四边不透明，中间全透明，露出下层 -->
+  <path fill="url(#frame)" fill-rule="evenodd" d="
+    M0 0h1920v1080H0V0z
+    M120 120v840h1680V120H120z
+  " />
+</svg>

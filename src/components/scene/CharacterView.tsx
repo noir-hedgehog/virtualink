@@ -1,12 +1,18 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Image from "next/image";
 import { useSceneStore } from "@/stores/sceneStore";
 import { getCharacterConfig } from "@/config/characters";
 import { getAssetUrl, cn } from "@/lib/utils";
 import { isStandVideo } from "@/lib/standMedia";
+import { usePlayVoice } from "@/lib/voice";
 import { Live2DViewer } from "./Live2DViewer";
+
+const TAP_MOVE_THRESHOLD = 8;
+const RAPID_TAP_WINDOW_MS = 2000;
+const RAPID_TAP_COUNT = 5;
+const RANDOM_TAP_PROB = 0.35;
 
 function getDisplayFromStore(
   characterDisplay: Record<string, { x?: number; y?: number; scale?: number }>,
@@ -29,10 +35,18 @@ export function CharacterView() {
   const characterDisplay = useSceneStore((s) => s.characterDisplay);
   const characterAdjustLocked = useSceneStore((s) => s.characterAdjustLocked);
   const setCharacterDisplay = useSceneStore((s) => s.setCharacterDisplay);
+  const getStandIndex = useSceneStore((s) => s.getStandIndex);
 
   const display = getDisplayFromStore(characterDisplay, characterId, sceneId);
   const config = characterId ? getCharacterConfig(characterId) : null;
+  const effectiveStand =
+    config?.stands?.length
+      ? (config.stands[getStandIndex(characterId ?? "")] ?? config.stands[0])
+      : config?.defaultStand;
   const canAdjust = !characterAdjustLocked;
+  const playVoice = usePlayVoice();
+  const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
+  const tapTimestampsRef = useRef<number[]>([]);
 
   const [drag, setDrag] = useState<{
     startClientX: number;
@@ -51,18 +65,21 @@ export function CharacterView() {
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
-      if (!canAdjust || !characterId || !sceneId) return;
+      if (!characterId || !sceneId) return;
       if ((e.target as HTMLElement).closest("[data-character-toolbar]")) return;
       e.preventDefault();
-      e.currentTarget.setPointerCapture(e.pointerId);
-      setDrag({
-        startClientX: e.clientX,
-        startClientY: e.clientY,
-        baseX: display.x,
-        baseY: display.y,
-        currentClientX: e.clientX,
-        currentClientY: e.clientY,
-      });
+      pointerDownRef.current = { x: e.clientX, y: e.clientY };
+      if (canAdjust) {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        setDrag({
+          startClientX: e.clientX,
+          startClientY: e.clientY,
+          baseX: display.x,
+          baseY: display.y,
+          currentClientX: e.clientX,
+          currentClientY: e.clientY,
+        });
+      }
     },
     [canAdjust, characterId, sceneId, display.x, display.y]
   );
@@ -77,14 +94,41 @@ export function CharacterView() {
 
   const onPointerUp = useCallback(
     (e: React.PointerEvent) => {
-      if (!drag) return;
-      e.currentTarget.releasePointerCapture(e.pointerId);
-      const x = drag.baseX + (e.clientX - drag.startClientX);
-      const y = drag.baseY + (e.clientY - drag.startClientY);
-      setCharacterDisplay(characterId!, sceneId, { x, y });
-      setDrag(null);
+      const start = pointerDownRef.current;
+      pointerDownRef.current = null;
+      if (drag) e.currentTarget.releasePointerCapture(e.pointerId);
+      const dist = start ? Math.hypot(e.clientX - start.x, e.clientY - start.y) : 999;
+      const isTap = dist < TAP_MOVE_THRESHOLD;
+
+      if (isTap && config?.voice) {
+        const now = Date.now();
+        const timestamps = tapTimestampsRef.current;
+        timestamps.push(now);
+        const cutoff = now - RAPID_TAP_WINDOW_MS;
+        const recent = timestamps.filter((t) => t > cutoff);
+        tapTimestampsRef.current = recent;
+        if (recent.length >= RAPID_TAP_COUNT) {
+          tapTimestampsRef.current = [];
+          playVoice("stand_tap_5");
+        } else if (Math.random() < RANDOM_TAP_PROB) {
+          const keys = config.tapRandomKeys?.length
+            ? config.tapRandomKeys
+            : ["stand_tap"];
+          const key = keys[Math.floor(Math.random() * keys.length)];
+          playVoice(key);
+        }
+      }
+
+      if (drag) {
+        if (!isTap) {
+          const x = drag.baseX + (e.clientX - drag.startClientX);
+          const y = drag.baseY + (e.clientY - drag.startClientY);
+          setCharacterDisplay(characterId!, sceneId, { x, y });
+        }
+        setDrag(null);
+      }
     },
-    [drag, characterId, sceneId, setCharacterDisplay]
+    [drag, characterId, sceneId, setCharacterDisplay, config?.voice, playVoice]
   );
 
   const setScale = useCallback(
@@ -110,11 +154,11 @@ export function CharacterView() {
             motionGroup={config.live2d.motions?.idle ?? "Idle"}
           />
         </div>
-      ) : config.defaultStand ? (
+      ) : effectiveStand ? (
         <div
           className={cn(
-            "relative h-full w-full max-w-[50%] aspect-[2/3] character-stand select-none",
-            isStandVideo(config.defaultStand) && "bg-transparent"
+            "relative h-full max-w-full aspect-[2/3] character-stand select-none min-w-0",
+            isStandVideo(effectiveStand) && "bg-transparent character-stand--video"
           )}
           style={{
             minWidth: 0,
@@ -123,9 +167,9 @@ export function CharacterView() {
           }}
           onDragStart={(e) => e.preventDefault()}
         >
-          {isStandVideo(config.defaultStand) ? (
+          {isStandVideo(effectiveStand) ? (
             <video
-              src={getAssetUrl(config.defaultStand)}
+              src={getAssetUrl(effectiveStand)}
               className="h-full w-full object-contain object-bottom pointer-events-none bg-transparent"
               autoPlay
               loop
@@ -135,7 +179,7 @@ export function CharacterView() {
             />
           ) : (
             <Image
-              src={getAssetUrl(config.defaultStand)}
+              src={getAssetUrl(effectiveStand)}
               alt={config.name}
               fill
               className="object-contain object-bottom pointer-events-none"
@@ -178,7 +222,7 @@ export function CharacterView() {
               }
             }}
           >
-            <div className="h-full w-full" style={{ minHeight: "60vh" }}>
+            <div className="h-full w-full min-h-0 flex flex-col justify-end">
               {content}
             </div>
           </div>
@@ -194,8 +238,8 @@ export function CharacterView() {
           <span className="text-lofi-cream/80 text-sm whitespace-nowrap">缩放</span>
           <input
             type="range"
-            min={0.3}
-            max={2}
+            min={0.2}
+            max={4}
             step={0.05}
             value={display.scale}
             onChange={(e) => setScale(Number(e.target.value))}

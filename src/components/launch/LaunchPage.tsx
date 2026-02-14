@@ -1,22 +1,35 @@
 "use client";
 
 import { getCharacterConfig, getStories, listCharacters } from "@/config/characters";
+import { defaultScenes } from "@/config/scenes";
 import { APP_VERSION, UPDATE_NOTES } from "@/config/version";
 import { getAssetUrl } from "@/lib/utils";
 import { isStandVideo } from "@/lib/standMedia";
 import { useLaunchStore, FIRST_MEET_STORY_ID } from "@/stores/launchStore";
 import { useSceneStore } from "@/stores/sceneStore";
 import { useStoryStore } from "@/stores/storyStore";
+import { isSceneStatic, isSceneVideo } from "@/types/scene";
 import { ChevronDown, Settings } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-const LAUNCH_BG = "/wallpapers/background-test.png";
 const RIPPLE_DURATION_MS = 900;
 
+function getLaunchBackgroundUrl(characterId: string | null): string {
+  if (!characterId) return getAssetUrl("/wallpapers/default-scene.svg");
+  const config = getCharacterConfig(characterId);
+  const sceneId = config?.defaultSceneId;
+  if (!sceneId) return getAssetUrl("/wallpapers/default-scene.svg");
+  const scene = defaultScenes.find((s) => s.id === sceneId);
+  if (!scene) return getAssetUrl("/wallpapers/default-scene.svg");
+  if (isSceneStatic(scene)) return getAssetUrl(scene.background);
+  if (isSceneVideo(scene) && scene.fallbackImage) return getAssetUrl(scene.fallbackImage);
+  return getAssetUrl("/wallpapers/default-scene.svg");
+}
+
 export function LaunchPage() {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>("miki");
   const [showVersion, setShowVersion] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -28,6 +41,10 @@ export function LaunchPage() {
   const commitLinkStart = useCallback((characterId: string) => {
     const isFirstTime = completeLaunch(characterId);
     useSceneStore.getState().setCharacter(characterId);
+    const config = getCharacterConfig(characterId);
+    if (config?.defaultSceneId) {
+      useSceneStore.getState().setScene(config.defaultSceneId);
+    }
     const hasFirstMeet = getStories(characterId).some((s) => s.id === FIRST_MEET_STORY_ID);
     if (isFirstTime && hasFirstMeet) {
       useStoryStore.getState().unlock(characterId, FIRST_MEET_STORY_ID);
@@ -64,6 +81,7 @@ export function LaunchPage() {
 
   const selectedConfig = selectedId ? getCharacterConfig(selectedId) : null;
   const standUrl = selectedConfig?.defaultStand ? getAssetUrl(selectedConfig.defaultStand) : null;
+  const launchBgUrl = getLaunchBackgroundUrl(selectedId);
 
   const rippleOverlayStyle: React.CSSProperties = {
     WebkitMaskImage: `radial-gradient(circle at 50% 50%, transparent 0%, transparent ${rippleProgress * 150}%, black ${rippleProgress * 150}%)`,
@@ -74,7 +92,7 @@ export function LaunchPage() {
     <div
       className="relative flex min-h-screen flex-col bg-lofi-dark"
       style={{
-        backgroundImage: `url(${getAssetUrl(LAUNCH_BG)})`,
+        backgroundImage: `url(${launchBgUrl})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -126,7 +144,7 @@ export function LaunchPage() {
         {showSettings && (
           <div className="w-full max-w-lg rounded-xl border border-lofi-brown/30 bg-lofi-dark/90 p-4 text-sm text-lofi-cream/80 shadow-xl backdrop-blur-sm">
             <p className="font-medium text-lofi-cream">基础设置</p>
-            <p className="mt-1 text-lofi-cream/50">进入应用后可在右下角或设置中调整壁纸、场景、角色与播放等。</p>
+            <p className="mt-1 text-lofi-cream/50">进入应用后可在右下角或设置中调整背景、声音与播放等。</p>
           </div>
         )}
 
@@ -136,8 +154,8 @@ export function LaunchPage() {
               <div className="mb-4 flex justify-center">
                 <div
                   className={cn(
-                    "character-stand relative h-[240px] w-[min(180px,36vw)] max-w-[180px] select-none",
-                    isStandVideo(selectedConfig?.defaultStand ?? "") && "bg-transparent"
+                    "character-stand relative h-[480px] w-[min(360px,72vw)] max-w-[360px] select-none",
+                    isStandVideo(selectedConfig?.defaultStand ?? "") && "bg-transparent character-stand--video"
                   )}
                 >
                   {isStandVideo(selectedConfig?.defaultStand ?? "") ? (

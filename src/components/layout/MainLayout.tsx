@@ -14,6 +14,7 @@ import { BottomLeftPanel } from "../floating/BottomLeftPanel";
 import { PlayerAudio } from "../player/PlayerAudio";
 import { VoicePlayer } from "../voice/VoicePlayer";
 import { SubtitleBar } from "../voice/SubtitleBar";
+import { AmbientSoundPlayer } from "../ambient/AmbientSoundPlayer";
 
 export function MainLayout() {
   return (
@@ -21,6 +22,7 @@ export function MainLayout() {
       <PlayerAudio />
       <VoicePlayer />
       <SubtitleBar />
+      <AmbientSoundPlayer />
       <StoryPlayer />
       <StoryCallPrompt />
       <ExitTransitionOverlay />

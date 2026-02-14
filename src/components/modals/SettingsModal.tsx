@@ -1,11 +1,12 @@
 "use client";
 
 import { Modal } from "@/components/ui/Modal";
-import { listCharacters } from "@/config/characters";
+import { ambientSoundOptions } from "@/config/ambientSounds";
 import type { DevLogEntry } from "@/stores/devLogStore";
 import { useDevLogStore } from "@/stores/devLogStore";
 import { useModalStore } from "@/stores/modalStore";
 import { useSceneStore } from "@/stores/sceneStore";
+import { useAmbientSoundStore } from "@/stores/ambientSoundStore";
 import { useEffect, useState } from "react";
 
 /** 清空历史数据时移除的所有持久化 key（待办、日记、习惯、番茄钟、场景、小部件、播放器、成就、剧情、亲密度、日志） */
@@ -15,6 +16,7 @@ const DEV_STORAGE_KEYS = [
   "chillmxmk-habits",
   "chillmxmk-pomodoro",
   "chillmxmk-scene",
+  "chillmxmk-ambient",
   "chillmxmk-widgets",
   "chillmxmk-player",
   "chillmxmk-achievements",
@@ -22,6 +24,7 @@ const DEV_STORAGE_KEYS = [
   "chillmxmk-intimacy",
   "chillmxmk-devlog",
   "chillmxmk-launch",
+  "chillmxmk-voice-triggers",
 ];
 
 function formatLogTime(ts: number): string {
@@ -44,6 +47,10 @@ function formatLogEntry(e: DevLogEntry): string {
       return `[成就触发] ${e.characterId} · ${e.achievementId} · ${time}`;
     case "intimacy_change":
       return `[亲密度] ${e.characterId} +${e.amount} → ${e.pointsAfter} · ${time}`;
+    case "character_display":
+      return `[立绘/缩放] ${e.characterId} · ${e.sceneId} x=${e.x} y=${e.y} scale=${e.scale} · ${time}`;
+    case "widget_position":
+      return `[小部件] ${e.widgetId} x=${e.x} y=${e.y} · ${time}`;
     default:
       return `${time}`;
   }
@@ -117,26 +124,16 @@ function DeveloperToolsTab() {
 
 const TABS = [
   { id: "general", label: "通用" },
-  { id: "wallpaper", label: "壁纸" },
   { id: "scene", label: "场景" },
-  { id: "character", label: "角色" },
   { id: "developer", label: "开发者工具" },
 ] as const;
 
 export function SettingsModal() {
   const settingsTab = useModalStore((s) => s.settingsTab);
   const [tab, setTab] = useState<typeof TABS[number]["id"]>(settingsTab);
-  const {
-    wallpapers,
-    scenes,
-    currentWallpaperId,
-    currentSceneId,
-    currentCharacterId,
-    setWallpaper,
-    setScene,
-    setCharacter,
-  } = useSceneStore();
-  const characters = listCharacters();
+  const { scenes, currentSceneId, setScene } = useSceneStore();
+  const ambientSoundId = useAmbientSoundStore((s) => s.ambientSoundId);
+  const setAmbientSound = useAmbientSoundStore((s) => s.setAmbientSound);
 
   useEffect(() => {
     setTab(settingsTab);
@@ -165,66 +162,47 @@ export function SettingsModal() {
           {tab === "general" && (
             <p className="text-lofi-cream/70 text-sm">番茄钟时长等可在主界面番茄钟处后续扩展。</p>
           )}
-          {tab === "wallpaper" && (
-            <div className="space-y-3">
-              <h3 className="text-lofi-cream font-medium text-sm">选择壁纸</h3>
-              <div className="flex flex-wrap gap-2">
-                {wallpapers.map((w) => (
-                  <button
-                    key={w.id}
-                    type="button"
-                    onClick={() => setWallpaper(w.id)}
-                    className={`rounded-lg border-2 px-3 py-1.5 text-sm ${
-                      currentWallpaperId === w.id
-                        ? "border-lofi-accent bg-lofi-accent/20 text-lofi-cream"
-                        : "border-lofi-brown/40 text-lofi-cream/80 hover:border-lofi-brown/60"
-                    }`}
-                  >
-                    {w.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
           {tab === "scene" && (
-            <div className="space-y-3">
-              <h3 className="text-lofi-cream font-medium text-sm">选择场景</h3>
-              <div className="flex flex-wrap gap-2">
-                {scenes.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setScene(s.id)}
-                    className={`rounded-lg border-2 px-3 py-1.5 text-sm ${
-                      currentSceneId === s.id
-                        ? "border-lofi-accent bg-lofi-accent/20 text-lofi-cream"
-                        : "border-lofi-brown/40 text-lofi-cream/80 hover:border-lofi-brown/60"
-                    }`}
-                  >
-                    {s.name}
-                  </button>
-                ))}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-lofi-cream font-medium text-sm">背景</h3>
+                <p className="text-lofi-cream/60 text-xs">静态图或循环视频。</p>
+                <div className="flex flex-wrap gap-2">
+                  {scenes.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setScene(s.id)}
+                      className={`rounded-lg border-2 px-3 py-1.5 text-sm ${
+                        currentSceneId === s.id
+                          ? "border-lofi-accent bg-lofi-accent/20 text-lofi-cream"
+                          : "border-lofi-brown/40 text-lofi-cream/80 hover:border-lofi-brown/60"
+                      }`}
+                    >
+                      {s.name}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-          {tab === "character" && (
-            <div className="space-y-3">
-              <h3 className="text-lofi-cream font-medium text-sm">选择角色</h3>
-              <div className="flex flex-wrap gap-2">
-                {characters.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setCharacter(c.id)}
-                    className={`rounded-lg border-2 px-3 py-1.5 text-sm ${
-                      currentCharacterId === c.id
-                        ? "border-lofi-accent bg-lofi-accent/20 text-lofi-cream"
-                        : "border-lofi-brown/40 text-lofi-cream/80 hover:border-lofi-brown/60"
-                    }`}
-                  >
-                    {c.name}
-                  </button>
-                ))}
+              <div className="space-y-2">
+                <h3 className="text-lofi-cream font-medium text-sm">声音</h3>
+                <p className="text-lofi-cream/60 text-xs">环境音循环播放，需自备音频文件。</p>
+                <div className="flex flex-wrap gap-2">
+                  {ambientSoundOptions.map((o) => (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => setAmbientSound(o.id)}
+                      className={`rounded-lg border-2 px-3 py-1.5 text-sm ${
+                        ambientSoundId === o.id
+                          ? "border-lofi-accent bg-lofi-accent/20 text-lofi-cream"
+                          : "border-lofi-brown/40 text-lofi-cream/80 hover:border-lofi-brown/60"
+                      }`}
+                    >
+                      {o.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}

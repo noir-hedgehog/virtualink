@@ -22,9 +22,12 @@ export function checkAchievementsAndTriggerStories(): string[] {
       (s) => s.trigger.type === "achievement" && s.trigger.achievementId === achievementId
     );
     if (story) {
+      const wasAlreadyUnlocked = storyStore.isUnlocked(characterId, story.id);
       storyStore.unlock(characterId, story.id);
-      storyStore.setIncomingStory({ characterId, storyId: story.id });
-      triggeredStoryIds.push(story.id);
+      if (!wasAlreadyUnlocked) {
+        storyStore.setIncomingStory({ characterId, storyId: story.id });
+        triggeredStoryIds.push(story.id);
+      }
     }
   }
   return triggeredStoryIds;

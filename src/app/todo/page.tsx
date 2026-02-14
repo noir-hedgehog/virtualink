@@ -1,6 +1,7 @@
 "use client";
 
 import { triggerAchievementsAndIntimacy } from "@/lib/storyTrigger";
+import { usePlayVoice } from "@/lib/voice";
 import { useTodoStore } from "@/stores/todoStore";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -10,6 +11,7 @@ export default function TodoPage() {
   const router = useRouter();
   const { items, add, toggle, remove, updateTitle } = useTodoStore();
   const [newTitle, setNewTitle] = useState("");
+  const playVoice = usePlayVoice();
 
   const handleAdd = () => {
     const t = newTitle.trim();
@@ -17,6 +19,7 @@ export default function TodoPage() {
       add(t);
       setNewTitle("");
       triggerAchievementsAndIntimacy(2);
+      playVoice("todo_add");
     }
   };
 

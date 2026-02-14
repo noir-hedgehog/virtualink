@@ -1,11 +1,14 @@
 "use client";
 
 import { getCharacterConfig } from "@/config/characters";
+import { defaultScenes } from "@/config/scenes";
 import { getAssetUrl, cn } from "@/lib/utils";
 import { isStandVideo } from "@/lib/standMedia";
 import { usePlayerStore } from "@/stores/playerStore";
+import { useSceneStore } from "@/stores/sceneStore";
 import { useStoryStore } from "@/stores/storyStore";
 import { isStoryGalgame, isStoryVideo } from "@/types/story";
+import { isSceneStatic, isSceneVideo } from "@/types/scene";
 import { Volume2, VolumeX, X } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -113,24 +116,33 @@ function VideoStoryPlayer({ url, onEnd }: { url: string; onEnd: () => void }) {
   );
 }
 
-/** Galgame 型剧情：场景 + 立绘 + 对话，点击推进 */
+/** Galgame 型剧情：场景 + 立绘 + 对话，点击推进；若场景带 audioUrl + lineTimings 则点击下一句时播放对应音频片段；未指定背景/立绘时使用角色默认场景背景与默认立绘 */
 function GalgameStoryPlayer({
+  characterId,
+  defaultBackgroundUrl,
   scenes,
   onEnd,
 }: {
+  characterId: string;
+  defaultBackgroundUrl: string | null;
   scenes: Array<{
     background?: string;
     character?: string;
     position?: "left" | "center" | "right";
     lines: string[];
+    audioUrl?: string;
+    lineTimings?: Array<{ startMs: number; endMs: number }>;
   }>;
   onEnd: () => void;
 }) {
   const [sceneIndex, setSceneIndex] = useState(0);
   const [lineIndex, setLineIndex] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scene = scenes[sceneIndex];
   const line = scene?.lines[lineIndex] ?? "";
+  const timing = scene?.lineTimings?.[lineIndex];
 
   const advance = useCallback(() => {
     if (!scene) return;
@@ -145,6 +157,43 @@ function GalgameStoryPlayer({
   }, [scene, sceneIndex, lineIndex, scenes.length, onEnd]);
 
   useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (scene?.audioUrl) {
+      audio.src = getAssetUrl(scene.audioUrl);
+    } else {
+      audio.removeAttribute("src");
+    }
+  }, [sceneIndex, scene?.audioUrl]);
+
+  useEffect(() => {
+    if (stopTimeoutRef.current) {
+      clearTimeout(stopTimeoutRef.current);
+      stopTimeoutRef.current = null;
+    }
+    const audio = audioRef.current;
+    if (!scene?.audioUrl || !timing || !audio) return;
+    const startSec = timing.startMs / 1000;
+    const durationMs = Math.max(0, timing.endMs - timing.startMs);
+    const playSegment = () => {
+      audio.currentTime = startSec;
+      audio.play().catch(() => {});
+      stopTimeoutRef.current = setTimeout(() => {
+        audio.pause();
+        stopTimeoutRef.current = null;
+      }, durationMs);
+    };
+    if (audio.readyState >= 2) {
+      playSegment();
+    } else {
+      audio.addEventListener("canplay", () => playSegment(), { once: true });
+    }
+    return () => {
+      if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
+    };
+  }, [sceneIndex, lineIndex, scene?.audioUrl, timing]);
+
+  useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
@@ -157,8 +206,14 @@ function GalgameStoryPlayer({
 
   if (!scene) return null;
 
-  const config = scene.character ? getCharacterConfig(scene.character) : null;
-  const standUrl = config?.defaultStand ? getAssetUrl(config.defaultStand) : "";
+  const charId = scene.character ?? characterId;
+  const config = getCharacterConfig(charId);
+  const getStandIndex = useSceneStore((s) => s.getStandIndex);
+  const standSrc = config?.stands?.length
+    ? (config.stands[getStandIndex(charId)] ?? config.stands[0])
+    : config?.defaultStand;
+  const standUrl = standSrc ? getAssetUrl(standSrc) : "";
+  const bgUrl = scene.background ? getAssetUrl(scene.background) : (defaultBackgroundUrl ?? "");
   const positionClass =
     scene.position === "left"
       ? "justify-start"
@@ -170,11 +225,12 @@ function GalgameStoryPlayer({
     <div
       className="fixed inset-0 z-[100] flex flex-col bg-lofi-dark"
       style={
-        scene.background
-          ? { backgroundImage: `url(${getAssetUrl(scene.background)})`, backgroundSize: "cover" }
+        bgUrl
+          ? { backgroundImage: `url(${bgUrl})`, backgroundSize: "cover" }
           : undefined
       }
     >
+      <audio ref={audioRef} className="hidden" />
       <button
         type="button"
         onClick={onEnd}
@@ -189,10 +245,10 @@ function GalgameStoryPlayer({
           <div
             className={cn(
               "character-stand relative h-[70vh] max-h-[480px] w-auto max-w-[45%] aspect-[2/3] select-none",
-              config?.defaultStand && isStandVideo(config.defaultStand) && "bg-transparent"
+              standSrc && isStandVideo(standSrc) && "bg-transparent character-stand--video"
             )}
           >
-            {config?.defaultStand && isStandVideo(config.defaultStand) ? (
+            {standSrc && isStandVideo(standSrc) ? (
               <video
                 src={standUrl}
                 className="h-full w-full object-contain object-bottom bg-transparent"
@@ -248,8 +304,24 @@ export function StoryPlayer() {
   }
 
   if (isStoryGalgame(story)) {
+    const config = currentStoryCharacterId ? getCharacterConfig(currentStoryCharacterId) : null;
+    const defaultSceneId = config?.defaultSceneId;
+    const defaultScene = defaultSceneId
+      ? defaultScenes.find((s) => s.id === defaultSceneId)
+      : null;
+    const defaultBackgroundUrl =
+      defaultScene && isSceneStatic(defaultScene)
+        ? getAssetUrl(defaultScene.background)
+        : defaultScene && isSceneVideo(defaultScene) && defaultScene.fallbackImage
+          ? getAssetUrl(defaultScene.fallbackImage)
+          : null;
     return (
-      <GalgameStoryPlayer scenes={story.scenes} onEnd={closeStory} />
+      <GalgameStoryPlayer
+        characterId={currentStoryCharacterId!}
+        defaultBackgroundUrl={defaultBackgroundUrl}
+        scenes={story.scenes}
+        onEnd={closeStory}
+      />
     );
   }
 

@@ -25,6 +25,22 @@ export type DevLogEntry =
       amount: number;
       pointsAfter: number;
       timestamp: number;
+    }
+  | {
+      type: "character_display";
+      characterId: string;
+      sceneId: string;
+      x: number;
+      y: number;
+      scale: number;
+      timestamp: number;
+    }
+  | {
+      type: "widget_position";
+      widgetId: string;
+      x: number;
+      y: number;
+      timestamp: number;
     };
 
 type DevLogState = {

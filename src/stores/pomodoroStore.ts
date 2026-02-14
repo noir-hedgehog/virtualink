@@ -18,6 +18,8 @@ type PomodoroState = {
   tick: () => void;
   setWorkMinutes: (m: number) => void;
   setRestMinutes: (m: number) => void;
+  /** 切换工作/休息阶段，并重置该阶段剩余时间 */
+  switchPhase: () => void;
 };
 
 export const usePomodoroStore = create<PomodoroState>()(
@@ -92,6 +94,14 @@ export const usePomodoroStore = create<PomodoroState>()(
             ? { remainingSeconds: m * 60 }
             : {}),
         });
+      },
+
+      switchPhase: () => {
+        const state = get();
+        const nextPhase = state.phase === "work" ? "rest" : "work";
+        const nextSeconds =
+          nextPhase === "work" ? state.workMinutes * 60 : state.restMinutes * 60;
+        set({ phase: nextPhase, remainingSeconds: nextSeconds });
       },
     }),
     { name: "chillmxmk-pomodoro" }

@@ -4,7 +4,7 @@ export type ModalId = "todo" | "habits" | "diary" | "calendar" | "settings" | "c
 
 type ModalState = {
   openModal: ModalId;
-  settingsTab: "general" | "wallpaper" | "scene" | "character" | "developer";
+  settingsTab: "general" | "scene" | "developer";
   open: (id: ModalId, options?: { settingsTab?: ModalState["settingsTab"] }) => void;
   close: () => void;
 };

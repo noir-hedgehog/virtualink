@@ -8,7 +8,8 @@ import { useModalStore } from "@/stores/modalStore";
 import { useSceneStore } from "@/stores/sceneStore";
 import { useStoryStore } from "@/stores/storyStore";
 import { getCharacterConfig } from "@/config/characters";
-import { cn } from "@/lib/utils";
+import { getAssetUrl, cn } from "@/lib/utils";
+import { isStandVideo } from "@/lib/standMedia";
 
 const PANEL_IDS = ["character", "chat", "story", "achievements"] as const;
 type PanelId = (typeof PANEL_IDS)[number];
@@ -16,7 +17,7 @@ type PanelId = (typeof PANEL_IDS)[number];
 const TITLES: Record<PanelId, string> = {
   character: "人物设定",
   chat: "聊天记录",
-  story: "剧情",
+  story: "回忆",
   achievements: "成就",
 };
 
@@ -92,7 +93,7 @@ export function BottomLeftPanel() {
           </button>
         </header>
         <div className="flex-1 min-h-0 overflow-auto p-4">
-          {panelId === "character" && <CharacterContent />}
+          {panelId === "character" && <CharacterPanelWithTabs />}
           {panelId === "chat" && (
             <p className="text-lofi-cream/50 text-sm">与角色的聊天记录将在此显示，后续扩展。</p>
           )}
@@ -101,6 +102,44 @@ export function BottomLeftPanel() {
         </div>
       </div>
     </>
+  );
+}
+
+type CharacterTabId = "info" | "stand";
+
+function CharacterPanelWithTabs() {
+  const [activeTab, setActiveTab] = useState<CharacterTabId>("info");
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex gap-1 rounded-lg border border-lofi-brown/20 bg-lofi-dark/40 p-1">
+        <button
+          type="button"
+          onClick={() => setActiveTab("info")}
+          className={cn(
+            "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+            activeTab === "info"
+              ? "bg-lofi-brown/30 text-lofi-cream"
+              : "text-lofi-cream/70 hover:text-lofi-cream"
+          )}
+        >
+          角色信息
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("stand")}
+          className={cn(
+            "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+            activeTab === "stand"
+              ? "bg-lofi-brown/30 text-lofi-cream"
+              : "text-lofi-cream/70 hover:text-lofi-cream"
+          )}
+        >
+          人物设定
+        </button>
+      </div>
+      {activeTab === "info" && <CharacterContent />}
+      {activeTab === "stand" && <StandSettingsContent />}
+    </div>
   );
 }
 
@@ -127,6 +166,61 @@ function CharacterContent() {
       ) : (
         <p className="text-lofi-cream/50 text-sm">未选择角色</p>
       )}
+    </div>
+  );
+}
+
+function StandSettingsContent() {
+  const currentCharacterId = useSceneStore((s) => s.currentCharacterId);
+  const getStandIndex = useSceneStore((s) => s.getStandIndex);
+  const setStandIndex = useSceneStore((s) => s.setStandIndex);
+  const config = currentCharacterId ? getCharacterConfig(currentCharacterId) : null;
+
+  if (!config) {
+    return <p className="text-lofi-cream/50 text-sm">未选择角色</p>;
+  }
+  const stands = config.stands?.length ? config.stands : (config.defaultStand ? [config.defaultStand] : []);
+  if (stands.length <= 1) {
+    return <p className="text-lofi-cream/50 text-sm">当前仅有一个立绘</p>;
+  }
+
+  const currentIndex = getStandIndex(currentCharacterId);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-lofi-cream/60 text-xs mb-1">切换角色立绘</p>
+      <div className="flex flex-wrap gap-2">
+        {stands.map((url, index) => (
+          <button
+            key={url}
+            type="button"
+            onClick={() => setStandIndex(currentCharacterId, index)}
+            className={cn(
+              "relative h-20 w-14 overflow-hidden rounded-lg border-2 transition-colors",
+              currentIndex === index
+                ? "border-lofi-accent bg-lofi-accent/20"
+                : "border-lofi-brown/30 hover:border-lofi-brown/50"
+            )}
+          >
+            {isStandVideo(url) ? (
+              <video
+                src={getAssetUrl(url)}
+                className="h-full w-full object-cover object-bottom"
+                muted
+                playsInline
+                loop
+                autoPlay
+              />
+            ) : (
+              <img
+                src={getAssetUrl(url)}
+                alt=""
+                className="h-full w-full object-cover object-bottom"
+              />
+            )}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

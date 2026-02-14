@@ -3,6 +3,7 @@
   "name": "弥希miki",
   "intro": "学生会副会长，和你一起专注学习与工作。",
   "defaultStand": "/characters/miki/miki-test.png",
+  "defaultSceneId": "miki",
   "live2d": null,
   "voice": {
     "pomodoro_pause": {

@@ -1,117 +1,144 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { useDevLogStore } from "./devLogStore";
+import { defaultScenes, defaultSceneId } from "@/config/scenes";
+import type { SceneConfig } from "@/types/scene";
 
-export type Wallpaper = { id: string; name: string; url: string };
-export type Scene = { id: string; name: string; overlayUrl?: string };
 export type CharacterId = string;
 
-/** 某角色在某场景下的显示设置：位置偏移(px)、缩放倍数 */
+/** 某角色的显示设置：位置偏移(px)、缩放倍数（不随背景切换重置） */
 export type CharacterDisplay = { x: number; y: number; scale: number };
 
-function characterDisplayKey(characterId: string, sceneId: string): string {
-  return `${characterId}|${sceneId}`;
+function characterDisplayKey(characterId: string): string {
+  return characterId;
 }
 
+const defaultCharacterDisplay: CharacterDisplay = { x: 0, y: 0, scale: 1 };
+
 type SceneState = {
-  wallpapers: Wallpaper[];
-  scenes: Scene[];
-  currentWallpaperId: string | null;
+  scenes: SceneConfig[];
   currentSceneId: string | null;
   currentCharacterId: CharacterId | null;
-  /** 按 "characterId|sceneId" 存储位置与缩放，持久化 */
   characterDisplay: Record<string, CharacterDisplay>;
-  /** 为 true 时不可拖拽/缩放角色，持久化 */
   characterAdjustLocked: boolean;
-  setWallpaper: (id: string | null) => void;
+  /** 主界面人物立绘是否显示，侧栏「隐藏」按钮切换 */
+  characterStandVisible: boolean;
+  /** 多立绘时，按角色 id 存储当前选中的立绘索引 */
+  standIndexByCharacter: Record<string, number>;
   setScene: (id: string | null) => void;
   setCharacter: (id: CharacterId | null) => void;
   getCharacterDisplay: (characterId: string, sceneId: string) => CharacterDisplay;
   setCharacterDisplay: (characterId: string, sceneId: string, value: Partial<CharacterDisplay>) => void;
   setCharacterAdjustLocked: (locked: boolean) => void;
+  setCharacterStandVisible: (visible: boolean) => void;
+  setStandIndex: (characterId: string, index: number) => void;
+  getStandIndex: (characterId: string) => number;
 };
-
-const defaultWallpapers: Wallpaper[] = [
-  { id: "default", name: "默认", url: "/wallpapers/background-test.png" },
-  { id: "sunset", name: "日落", url: "/wallpapers/sunset.jpg" },
-];
-
-const defaultScenes: Scene[] = [
-  { id: "default", name: "默认" },
-  { id: "room", name: "房间", overlayUrl: "" },
-];
-
-const defaultCharacterDisplay: CharacterDisplay = { x: 0, y: 0, scale: 1 };
 
 export const useSceneStore = create<SceneState>()(
   persist(
     (set, get) => ({
-      wallpapers: defaultWallpapers,
       scenes: defaultScenes,
-      currentWallpaperId: "default",
-      currentSceneId: "default",
+      currentSceneId: defaultSceneId,
       currentCharacterId: "miki",
       characterDisplay: {},
       characterAdjustLocked: true,
-      setWallpaper: (id) => set({ currentWallpaperId: id }),
+      characterStandVisible: true,
+      standIndexByCharacter: {},
       setScene: (id) => set({ currentSceneId: id }),
       setCharacter: (id) => set({ currentCharacterId: id }),
-      getCharacterDisplay: (characterId, sceneId) => {
-        const key = characterDisplayKey(characterId, sceneId);
+      getCharacterDisplay: (characterId, _sceneId) => {
+        const key = characterDisplayKey(characterId);
         return get().characterDisplay[key] ?? { ...defaultCharacterDisplay };
       },
       setCharacterDisplay: (characterId, sceneId, value) =>
         set((state) => {
-          const key = characterDisplayKey(characterId, sceneId);
+          const key = characterDisplayKey(characterId);
           const prev = state.characterDisplay[key] ?? { ...defaultCharacterDisplay };
           const next: CharacterDisplay = {
             x: value.x ?? prev.x,
             y: value.y ?? prev.y,
             scale: value.scale ?? prev.scale,
           };
+          useDevLogStore.getState().addLog({
+            type: "character_display",
+            characterId,
+            sceneId,
+            x: next.x,
+            y: next.y,
+            scale: next.scale,
+            timestamp: Date.now(),
+          });
           return {
             characterDisplay: { ...state.characterDisplay, [key]: next },
           };
         }),
       setCharacterAdjustLocked: (locked) => set({ characterAdjustLocked: locked }),
+      setCharacterStandVisible: (visible) => set({ characterStandVisible: visible }),
+      setStandIndex: (characterId, index) =>
+        set((s) => ({
+          standIndexByCharacter: {
+            ...s.standIndexByCharacter,
+            [characterId]: index,
+          },
+        })),
+      getStandIndex: (characterId) => {
+        const idx = get().standIndexByCharacter[characterId];
+        return typeof idx === "number" && idx >= 0 ? idx : 0;
+      },
     }),
     {
       name: "chillmxmk-scene",
       partialize: (state) => ({
-        currentWallpaperId: state.currentWallpaperId,
         currentSceneId: state.currentSceneId,
         currentCharacterId: state.currentCharacterId,
         characterDisplay: state.characterDisplay,
         characterAdjustLocked: state.characterAdjustLocked,
+        characterStandVisible: state.characterStandVisible,
+        standIndexByCharacter: state.standIndexByCharacter,
       }),
       merge: (persisted, current) => {
         const p = persisted as Partial<{
-          currentWallpaperId: string | null;
-          currentSceneId: string | null;
-          currentCharacterId: CharacterId | null;
-          characterDisplay: Record<string, CharacterDisplay>;
-          characterAdjustLocked: boolean;
+          currentWallpaperId?: string | null;
+          currentSceneId?: string | null;
+          currentCharacterId?: CharacterId | null;
+          characterDisplay?: Record<string, CharacterDisplay>;
+          characterAdjustLocked?: boolean;
+          characterStandVisible?: boolean;
+          standIndexByCharacter?: Record<string, number>;
         }> | undefined;
+        const oldWallpaperId = p?.currentWallpaperId;
+        const mergedSceneId =
+          p?.currentSceneId ??
+          (oldWallpaperId && current.scenes.some((s) => s.id === oldWallpaperId)
+            ? oldWallpaperId
+            : current.currentSceneId);
+        const validId =
+          current.scenes.some((s) => s.id === mergedSceneId) ? mergedSceneId : defaultSceneId;
+
+        const raw = p?.characterDisplay ?? current.characterDisplay;
+        const characterDisplay: Record<string, CharacterDisplay> = {};
+        for (const [key, value] of Object.entries(raw)) {
+          const characterId = key.includes("|") ? key.split("|")[0]! : key;
+          if (!characterId || !value) continue;
+          characterDisplay[characterId] = value as CharacterDisplay;
+        }
+
         return {
           ...current,
-          currentWallpaperId: p?.currentWallpaperId ?? current.currentWallpaperId,
-          currentSceneId: p?.currentSceneId ?? current.currentSceneId,
+          currentSceneId: validId,
           currentCharacterId: p?.currentCharacterId ?? current.currentCharacterId,
-          characterDisplay: p?.characterDisplay ?? current.characterDisplay,
+          characterDisplay: Object.keys(characterDisplay).length ? characterDisplay : current.characterDisplay,
           characterAdjustLocked: p?.characterAdjustLocked ?? current.characterAdjustLocked,
+          characterStandVisible: p?.characterStandVisible ?? current.characterStandVisible,
+          standIndexByCharacter: p?.standIndexByCharacter ?? current.standIndexByCharacter,
         };
       },
     }
   )
 );
 
-export function getCurrentWallpaper(state: SceneState): Wallpaper | null {
-  const id = state.currentWallpaperId;
-  if (!id) return null;
-  return state.wallpapers.find((w) => w.id === id) ?? null;
-}
-
-export function getCurrentScene(state: SceneState): Scene | null {
-  const id = state.currentSceneId;
-  if (!id) return null;
-  return state.scenes.find((s) => s.id === id) ?? null;
+export function getCurrentSceneConfig(state: SceneState): SceneConfig | null {
+  const id = state.currentSceneId ?? defaultSceneId;
+  return state.scenes.find((s) => s.id === id) ?? state.scenes[0] ?? null;
 }

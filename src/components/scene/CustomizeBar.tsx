@@ -12,7 +12,7 @@ const items: {
 }[] = [
   { id: "character", icon: User, label: "人物设定", action: "character" },
   { id: "chat", icon: MessageCircle, label: "聊天记录", action: "chat" },
-  { id: "story", icon: BookOpen, label: "剧情", action: "story" },
+  { id: "story", icon: BookOpen, label: "回忆", action: "story" },
   { id: "achievements", icon: Trophy, label: "成就", action: "achievements" },
 ];
 

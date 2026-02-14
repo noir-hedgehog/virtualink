@@ -1,13 +1,16 @@
-# VirtuaLink
-
-在线版的《Chill with you：Lo-Fi Story》，本来是想给游戏做Mod来着，结果发现它没开创意工坊；
-另外就是我有跨端显示和同步数据的需求，所以需要一个在线版；
+# VirtuaLink 真实连结：与你相伴的日常
+这是一个能陪伴你日常学习和工作的小应用；
+也是在线版的《Chill with you：Lo-Fi Story》（其实我本来是想给游戏做Mod来着，结果发现它没开创意工坊，并且开发者也不打算开；
+所以我只能自己手搓一个。
 当然还有夹带私货的想要复活弥希Miki（x
 
 体验地址：https://noir-hedgehog.github.io/virtualink/ 
 
-## 说明
-默认陪伴角色「弥希（Miki）」为同人二创设定；壁纸、场景、人物均支持替换为自备资源。
+## 制作说明
+相比于原作游戏，支持网页打开，省掉在工作等场合需要下载 Steam 的困扰；
+网页更适合跨端，未来也会支持更多联网能力和数据同步能力；
+默认陪伴角色「弥希（Miki）」为同人二创设定，壁纸、场景、人物均支持替换为自备资源。
+可以私有化部署，也可以直接用Github Page打开，（数据存在Local Storage，完全本地）
 在设置/人物设定中可选「Hiyori」角色以使用 Live2D 展示（视线跟随鼠标、待机动作）
 - Live2D 依赖 **Cubism Core**：运行时从 CDN 加载 `live2dcubismcore.min.js`；
 - `src/config/characters/<id>/config.json` — 角色配置（名称、立绘路径、`live2d.modelPath`、台词 key 等）
@@ -26,6 +29,11 @@
 - Next.js 15（App Router）、React 19、TypeScript
 - Tailwind CSS、Zustand（状态与持久化）
 - 数据暂存于浏览器 localStorage，后续可接云端同步
+
+## 文档
+
+- [剧情与成就系统规划](docs/STORY_AND_ACHIEVEMENTS.md) — 剧情形态、触发方式、成就与亲密度设计
+- [定制指南](docs/CUSTOMIZATION.md) — 如何定制场景（壁纸/叠加）、角色、剧情、成就
 
 ## 独立部署
 

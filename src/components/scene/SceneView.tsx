@@ -1,36 +1,54 @@
 "use client";
 
-import { useSceneStore } from "@/stores/sceneStore";
+import { useRef, useEffect } from "react";
+import { useSceneStore, getCurrentSceneConfig } from "@/stores/sceneStore";
 import { getAssetUrl } from "@/lib/utils";
 import { CharacterView } from "./CharacterView";
 import { CustomizeBar } from "./CustomizeBar";
+import { isSceneStatic, isSceneVideo } from "@/types/scene";
 
 export function SceneView() {
-  const wallpapers = useSceneStore((s) => s.wallpapers);
-  const scenes = useSceneStore((s) => s.scenes);
-  const currentWallpaperId = useSceneStore((s) => s.currentWallpaperId);
-  const currentSceneId = useSceneStore((s) => s.currentSceneId);
-  const currentWallpaper = wallpapers.find((w) => w.id === currentWallpaperId) ?? null;
-  const currentScene = scenes.find((s) => s.id === currentSceneId) ?? null;
+  const scene = useSceneStore((s) => getCurrentSceneConfig(s));
+  const characterStandVisible = useSceneStore((s) => s.characterStandVisible);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (v && scene && isSceneVideo(scene)) v.play().catch(() => {});
+  }, [scene?.id, scene?.type]);
 
   return (
     <div className="scene-bg relative h-full w-full overflow-hidden">
-      {/* 壁纸层 */}
-      {currentWallpaper?.url && (
+      {scene && isSceneStatic(scene) && (
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${getAssetUrl(currentWallpaper.url)})` }}
+          style={{ backgroundImage: `url(${getAssetUrl(scene.background)})` }}
         />
       )}
-      {/* 场景遮罩/叠加（可选） */}
-      {currentScene?.overlayUrl && (
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-90"
-          style={{ backgroundImage: `url(${getAssetUrl(currentScene.overlayUrl)})` }}
-        />
+
+      {scene && isSceneVideo(scene) && (
+        <>
+          {scene.fallbackImage && (
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: `url(${getAssetUrl(scene.fallbackImage)})` }}
+              aria-hidden
+            />
+          )}
+          <video
+            ref={videoRef}
+            src={getAssetUrl(scene.videoUrl)}
+            className="absolute inset-0 h-full w-full object-cover"
+            loop
+            muted
+            playsInline
+            autoPlay
+            onError={() => {}}
+          />
+        </>
       )}
-      {/* 角色层 */}
-      <CharacterView />
+
+      {characterStandVisible && <CharacterView />}
       <CustomizeBar />
     </div>
   );

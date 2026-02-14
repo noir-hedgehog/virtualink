@@ -6,7 +6,45 @@
   "birthday": "8月8日",
   "zodiac": "狮子座",
   "defaultStand": "/characters/hazel/stand.webm",
+  "defaultSceneId": "hazel",
   "live2d": null,
-  "voice": null,
-  "lineKeys": []
+  "voice": {
+    "stand_tap": {
+      "url": "/characters/hazel/voice/嗯.mp3",
+      "text": "嗯"
+    },
+    "stand_tap_5": {
+      "url": "/characters/hazel/voice/不要这样干嘛，不要这样干了.mp3",
+      "text": "不要这样干嘛，不要这样干了"
+    },
+    "diary_first_open": {
+      "url": "/characters/hazel/voice/Hazel-还不是那种关系哦.MP3",
+      "text": "还不是那种关系哦"
+    },
+    "todo_add": {
+      "url": "/characters/hazel/voice/这也太那个了吧.MP3",
+      "text": "这也太那个了吧"
+    },
+    "pomodoro_10min": {
+      "url": "/characters/hazel/voice/还有最后10分钟就可以下播了.MP3",
+      "text": "还有最后10分钟就可以下播了"
+    },
+    "exit": {
+      "url": "/characters/hazel/voice/那我等会就滚了.MP3",
+      "text": "那我等会就滚了"
+    },
+    "calendar_open": {
+      "url": "/characters/hazel/voice/因为就是没有准备好.MP3",
+      "text": "因为就是没有准备好"
+    },
+    "stand_tap_2": {
+      "url": "/characters/hazel/voice/额咦.MP3",
+      "text": "额咦"
+    }
+  },
+  "lineKeys": [],
+  "tapRandomKeys": [
+    "stand_tap",
+    "stand_tap_2"
+  ]
 }

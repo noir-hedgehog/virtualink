@@ -33,6 +33,11 @@ body {
   animation: character-breathe 4s ease-in-out infinite;
 }
 
+/* 视频立绘不应用呼吸动画 */
+.character-stand.character-stand--video {
+  animation: none;
+}
+
 /* 来电提示轻微震动（模仿电话） */
 @keyframes call-shake {
   0%, 100% {

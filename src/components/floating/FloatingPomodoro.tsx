@@ -2,7 +2,7 @@
 
 import { triggerAchievementsAndIntimacy } from "@/lib/storyTrigger";
 import { usePlayVoice } from "@/lib/voice";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, ArrowLeftRight } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { usePomodoroStore } from "@/stores/pomodoroStore";
 import { useClockTick } from "@/stores/uiStore";
@@ -30,9 +30,12 @@ export function FloatingPomodoro() {
     pause,
     setWorkMinutes,
     setRestMinutes,
+    switchPhase,
   } = usePomodoroStore();
+  const playVoice = usePlayVoice();
 
   const prevPhaseRef = useRef<"work" | "rest">("work");
+  const prevRemainingRef = useRef<number>(remainingSeconds);
   useEffect(() => {
     const now = phase;
     const prev = prevPhaseRef.current;
@@ -42,9 +45,19 @@ export function FloatingPomodoro() {
     }
   }, [phase]);
 
+  useEffect(() => {
+    const prev = prevRemainingRef.current;
+    prevRemainingRef.current = remainingSeconds;
+    if (isRunning && phase === "work" && prev > 600 && remainingSeconds === 600) {
+      playVoice("pomodoro_10min");
+    }
+  }, [isRunning, phase, remainingSeconds, playVoice]);
+
   const display = formatTime(remainingSeconds);
-  const label = phase === "work" ? "工作中" : "休息中";
-  const playVoice = usePlayVoice();
+  const statusLabel =
+    isRunning
+      ? (phase === "work" ? "工作中" : "休息中")
+      : (phase === "work" ? "开始工作" : "开始休息");
 
   const handlePlayPause = () => {
     if (isRunning) {
@@ -91,18 +104,29 @@ export function FloatingPomodoro() {
         </div>
       </div>
 
-      {/* 右侧：状态、倒计时、开始按钮 */}
-      <div className="flex flex-col items-center justify-center gap-1.5">
-        <span className="text-[20px] text-lofi-cream/60">{label}</span>
+      {/* 右侧：状态、倒计时、开始 + 切换工作/休息 */}
+      <div className="flex flex-col items-center justify-center gap-3">
+        <span className="text-lg text-lofi-cream/60">{statusLabel}</span>
         <span className="font-mono text-xl font-medium text-lofi-cream tabular-nums">{display}</span>
-        <button
-          type="button"
-          onClick={handlePlayPause}
-          className="flex items-center justify-center rounded-lg bg-lofi-accent/50 px-3 py-1.5 text-lofi-cream hover:bg-lofi-accent/70 transition-colors"
-          aria-label={isRunning ? "暂停" : "开始"}
-        >
-          {isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handlePlayPause}
+            className="flex items-center justify-center rounded-lg bg-lofi-accent/50 px-3 py-1.5 text-lofi-cream hover:bg-lofi-accent/70 transition-colors"
+            aria-label={isRunning ? "暂停" : "开始"}
+          >
+            {isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
+          </button>
+          <button
+            type="button"
+            onClick={switchPhase}
+            className="flex items-center justify-center rounded-lg border-0 bg-transparent px-1.5 py-1.5 text-lofi-cream/80 hover:bg-lofi-brown/30 hover:text-lofi-cream transition-colors"
+            aria-label="切换工作/休息"
+            title="切换工作/休息"
+          >
+            <ArrowLeftRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

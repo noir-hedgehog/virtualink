@@ -1,8 +1,14 @@
 "use client";
 
 import { triggerAchievementsAndIntimacy } from "@/lib/storyTrigger";
+import { usePlayVoice } from "@/lib/voice";
 import { useDiaryStore } from "@/stores/diaryStore";
+import { useSceneStore } from "@/stores/sceneStore";
+import { useStoryStore } from "@/stores/storyStore";
+import { useVoiceTriggerStore } from "@/stores/voiceTriggerStore";
 import { useState, useEffect } from "react";
+
+const STORY_HEARTMEM_ID = "story_heartmem";
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -12,11 +18,26 @@ export function DiaryContent() {
   const { getByDate, upsert } = useDiaryStore();
   const [date, setDate] = useState(todayStr());
   const [content, setContent] = useState("");
+  const playVoice = usePlayVoice();
+  const currentCharacterId = useSceneStore((s) => s.currentCharacterId);
+  const diaryFirstOpenPlayed = useVoiceTriggerStore((s) => s.diaryFirstOpenPlayed);
+  const setDiaryFirstOpenPlayed = useVoiceTriggerStore((s) => s.setDiaryFirstOpenPlayed);
 
   useEffect(() => {
     const e = getByDate(date);
     setContent(e?.content ?? "");
   }, [date, getByDate]);
+
+  useEffect(() => {
+    if (diaryFirstOpenPlayed) return;
+    setDiaryFirstOpenPlayed(true);
+    if (currentCharacterId === "hazel") {
+      useStoryStore.getState().unlock("hazel", STORY_HEARTMEM_ID);
+      useStoryStore.getState().setIncomingStory({ characterId: "hazel", storyId: STORY_HEARTMEM_ID });
+    } else {
+      playVoice("diary_first_open");
+    }
+  }, [diaryFirstOpenPlayed, currentCharacterId, playVoice, setDiaryFirstOpenPlayed]);
 
   const handleSave = () => {
     upsert(date, content);

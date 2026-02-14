@@ -2,25 +2,18 @@
 
 import { Suspense } from "react";
 import { useSceneStore } from "@/stores/sceneStore";
+import { useAmbientSoundStore } from "@/stores/ambientSoundStore";
+import { ambientSoundOptions } from "@/config/ambientSounds";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { listCharacters } from "@/config/characters";
 
 function SettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab") ?? "general";
-  const {
-    wallpapers,
-    scenes,
-    currentWallpaperId,
-    currentSceneId,
-    currentCharacterId,
-    setWallpaper,
-    setScene,
-    setCharacter,
-  } = useSceneStore();
-  const characters = listCharacters();
+  const { scenes, currentSceneId, setScene } = useSceneStore();
+  const ambientSoundId = useAmbientSoundStore((s) => s.ambientSoundId);
+  const setAmbientSound = useAmbientSoundStore((s) => s.setAmbientSound);
 
   return (
     <div className="flex h-screen flex-col bg-lofi-dark/95">
@@ -36,7 +29,7 @@ function SettingsContent() {
       </header>
       <div className="flex flex-1 gap-6 overflow-auto p-6">
         <nav className="flex w-40 shrink-0 flex-col gap-1">
-          {["general", "wallpaper", "scene", "character"].map((t) => (
+          {["general", "scene"].map((t) => (
             <button
               key={t}
               type="button"
@@ -48,9 +41,7 @@ function SettingsContent() {
               }`}
             >
               {t === "general" && "通用"}
-              {t === "wallpaper" && "壁纸"}
               {t === "scene" && "场景"}
-              {t === "character" && "角色"}
             </button>
           ))}
         </nav>
@@ -60,66 +51,47 @@ function SettingsContent() {
               <p className="text-lofi-cream/70">番茄钟时长等可在主界面番茄钟处后续扩展。</p>
             </div>
           )}
-          {tab === "wallpaper" && (
-            <div className="space-y-3">
-              <h2 className="text-lofi-cream font-medium">选择壁纸</h2>
-              <div className="flex flex-wrap gap-3">
-                {wallpapers.map((w) => (
-                  <button
-                    key={w.id}
-                    type="button"
-                    onClick={() => setWallpaper(w.id)}
-                    className={`rounded-lg border-2 px-4 py-2 text-sm transition-colors ${
-                      currentWallpaperId === w.id
-                        ? "border-lofi-accent bg-lofi-accent/20 text-lofi-cream"
-                        : "border-lofi-brown/40 text-lofi-cream/80 hover:border-lofi-brown/60"
-                    }`}
-                  >
-                    {w.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
           {tab === "scene" && (
-            <div className="space-y-3">
-              <h2 className="text-lofi-cream font-medium">选择场景</h2>
-              <div className="flex flex-wrap gap-3">
-                {scenes.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setScene(s.id)}
-                    className={`rounded-lg border-2 px-4 py-2 text-sm transition-colors ${
-                      currentSceneId === s.id
-                        ? "border-lofi-accent bg-lofi-accent/20 text-lofi-cream"
-                        : "border-lofi-brown/40 text-lofi-cream/80 hover:border-lofi-brown/60"
-                    }`}
-                  >
-                    {s.name}
-                  </button>
-                ))}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h2 className="text-lofi-cream font-medium">背景</h2>
+                <p className="text-lofi-cream/60 text-sm">静态图或循环视频。</p>
+                <div className="flex flex-wrap gap-3">
+                  {scenes.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setScene(s.id)}
+                      className={`rounded-lg border-2 px-4 py-2 text-sm transition-colors ${
+                        currentSceneId === s.id
+                          ? "border-lofi-accent bg-lofi-accent/20 text-lofi-cream"
+                          : "border-lofi-brown/40 text-lofi-cream/80 hover:border-lofi-brown/60"
+                      }`}
+                    >
+                      {s.name}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-          {tab === "character" && (
-            <div className="space-y-3">
-              <h2 className="text-lofi-cream font-medium">选择角色</h2>
-              <div className="flex flex-wrap gap-3">
-                {characters.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setCharacter(c.id)}
-                    className={`rounded-lg border-2 px-4 py-2 text-sm transition-colors ${
-                      currentCharacterId === c.id
-                        ? "border-lofi-accent bg-lofi-accent/20 text-lofi-cream"
-                        : "border-lofi-brown/40 text-lofi-cream/80 hover:border-lofi-brown/60"
-                    }`}
-                  >
-                    {c.name}
-                  </button>
-                ))}
+              <div className="space-y-2">
+                <h2 className="text-lofi-cream font-medium">声音</h2>
+                <p className="text-lofi-cream/60 text-sm">环境音循环播放，需自备音频文件。</p>
+                <div className="flex flex-wrap gap-3">
+                  {ambientSoundOptions.map((o) => (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => setAmbientSound(o.id)}
+                      className={`rounded-lg border-2 px-4 py-2 text-sm transition-colors ${
+                        ambientSoundId === o.id
+                          ? "border-lofi-accent bg-lofi-accent/20 text-lofi-cream"
+                          : "border-lofi-brown/40 text-lofi-cream/80 hover:border-lofi-brown/60"
+                      }`}
+                    >
+                      {o.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}

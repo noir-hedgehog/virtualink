@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { useDevLogStore } from "./devLogStore";
 
 export type WidgetId = "todo" | "habits" | "diary" | "calendar";
 
@@ -51,12 +52,21 @@ export const useWidgetStore = create<WidgetsState>()(
           },
         })),
       setWidgetPosition: (id, x, y) =>
-        set((state) => ({
-          widgets: {
-            ...state.widgets,
-            [id]: { ...state.widgets[id], x, y },
-          },
-        })),
+        set((state) => {
+          useDevLogStore.getState().addLog({
+            type: "widget_position",
+            widgetId: id,
+            x,
+            y,
+            timestamp: Date.now(),
+          });
+          return {
+            widgets: {
+              ...state.widgets,
+              [id]: { ...state.widgets[id], x, y },
+            },
+          };
+        }),
       setWidgetLocked: (id, locked) =>
         set((state) => ({
           widgets: {
