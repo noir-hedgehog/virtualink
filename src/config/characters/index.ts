@@ -1,9 +1,12 @@
 import type { Story } from "@/types/story";
+import { normalizeStories, type RawStory } from "./loadStories";
+
 import mikiConfig from "./miki/config.json";
-import { mikiStories } from "./miki/stories";
+import mikiStoriesRaw from "./miki/stories.json";
 import hiyoriConfig from "./hiyori/config.json";
+import hiyoriStoriesRaw from "./hiyori/stories.json";
 import hazelConfig from "./hazel/config.json";
-import { hazelStories } from "./hazel/stories";
+import hazelStoriesRaw from "./hazel/stories.json";
 
 /** 单条语音：音频地址 + 字幕文案（galgame 式显示） */
 export type VoiceEntry = { url: string; text: string };
@@ -35,11 +38,11 @@ const registry: Record<string, CharacterConfig> = {
   hazel: hazelConfig as CharacterConfig,
 };
 
-/** 各角色剧情列表（按角色独立） */
+/** 各角色剧情列表（按角色独立，由 stories.json 规范化得到） */
 const storiesByCharacter: Record<string, Story[]> = {
-  miki: mikiStories,
-  hiyori: [],
-  hazel: hazelStories,
+  miki: normalizeStories(mikiStoriesRaw as RawStory[]),
+  hiyori: normalizeStories(hiyoriStoriesRaw as RawStory[]),
+  hazel: normalizeStories(hazelStoriesRaw as RawStory[]),
 };
 
 export function getCharacterConfig(id: string): CharacterConfig | null {

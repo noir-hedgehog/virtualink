@@ -30,6 +30,9 @@ export type StoryVideo = {
 /** 单句带时间轴（与一条音频的片段对应，用于点击播放下句） */
 export type GalgameLineTiming = { startMs: number; endMs: number };
 
+/** 单句台词 + 起止时间（JSON 中可用 segments 替代 lines + lineTimings） */
+export type DialogueSegment = { text: string; startMs: number; endMs: number };
+
 /** Galgame 单镜：背景 + 立绘 + 对话；可选整段音频 + 每句时间轴，点击下一句时播放对应片段 */
 export type GalgameScene = {
   background?: string;
@@ -40,6 +43,13 @@ export type GalgameScene = {
   audioUrl?: string;
   /** 每句对应的起止时间（毫秒），与 lines 一一对应 */
   lineTimings?: GalgameLineTiming[];
+};
+
+/** 从 JSON 加载的 Galgame 单镜：可用 segments 替代 lines + lineTimings，加载时会被规范化 */
+export type GalgameSceneRaw = Omit<GalgameScene, "lines" | "lineTimings"> & {
+  lines?: string[];
+  lineTimings?: GalgameLineTiming[];
+  segments?: DialogueSegment[];
 };
 
 /** Galgame 型剧情 */

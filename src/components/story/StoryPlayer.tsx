@@ -9,7 +9,7 @@ import { useSceneStore } from "@/stores/sceneStore";
 import { useStoryStore } from "@/stores/storyStore";
 import { isStoryGalgame, isStoryVideo } from "@/types/story";
 import { isSceneStatic, isSceneVideo } from "@/types/scene";
-import { Volume2, VolumeX, X } from "lucide-react";
+import { Volume2, VolumeX, X, Play, Pause } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -137,8 +137,11 @@ function GalgameStoryPlayer({
 }) {
   const [sceneIndex, setSceneIndex] = useState(0);
   const [lineIndex, setLineIndex] = useState(0);
+  const [autoPlay, setAutoPlay] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState<0.5 | 1 | 1.25 | 1.5 | 2>(1);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoAdvanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scene = scenes[sceneIndex];
   const line = scene?.lines[lineIndex] ?? "";
@@ -176,12 +179,13 @@ function GalgameStoryPlayer({
     const startSec = timing.startMs / 1000;
     const durationMs = Math.max(0, timing.endMs - timing.startMs);
     const playSegment = () => {
+      audio.playbackRate = playbackSpeed;
       audio.currentTime = startSec;
       audio.play().catch(() => {});
       stopTimeoutRef.current = setTimeout(() => {
         audio.pause();
         stopTimeoutRef.current = null;
-      }, durationMs);
+      }, durationMs / playbackSpeed);
     };
     if (audio.readyState >= 2) {
       playSegment();
@@ -191,7 +195,22 @@ function GalgameStoryPlayer({
     return () => {
       if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
     };
-  }, [sceneIndex, lineIndex, scene?.audioUrl, timing]);
+  }, [sceneIndex, lineIndex, scene?.audioUrl, timing, playbackSpeed]);
+
+  useEffect(() => {
+    if (!autoPlay || !scene) return;
+    if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+    const durationMs = timing
+      ? (timing.endMs - timing.startMs) / playbackSpeed
+      : 2500 / playbackSpeed;
+    autoAdvanceRef.current = setTimeout(() => {
+      autoAdvanceRef.current = null;
+      advance();
+    }, durationMs);
+    return () => {
+      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+    };
+  }, [autoPlay, scene, sceneIndex, lineIndex, timing, playbackSpeed, advance]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -275,10 +294,45 @@ function GalgameStoryPlayer({
         tabIndex={0}
         onClick={advance}
         onKeyDown={(e) => (e.key === "Enter" || e.key === " " ? advance() : null)}
-        className="absolute bottom-0 left-0 right-0 border-t border-lofi-brown/30 bg-lofi-dark/95 px-6 py-4 text-lofi-cream cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-lofi-accent"
+        className="absolute bottom-0 left-0 right-0 border-t border-lofi-brown/30 bg-lofi-dark/95 px-6 py-4 pr-32 text-lofi-cream cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-lofi-accent"
       >
         <p className="min-h-[2.5rem] text-base">{line || "..."}</p>
         <p className="mt-2 text-xs text-lofi-cream/50">点击或按空格 / 回车继续</p>
+      </div>
+
+      <div className="absolute bottom-4 right-4 z-10 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setAutoPlay((v) => !v); }}
+          title={autoPlay ? "关闭自动播放" : "自动播放"}
+          className={cn(
+            "flex h-9 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors",
+            autoPlay
+              ? "border-lofi-accent bg-lofi-accent/30 text-lofi-cream"
+              : "border-lofi-brown/30 bg-lofi-dark/60 text-lofi-cream/80 hover:bg-lofi-brown/20"
+          )}
+        >
+          {autoPlay ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          <span>{autoPlay ? "自动中" : "自动"}</span>
+        </button>
+        <div className="flex items-center gap-0.5 rounded-lg border border-lofi-brown/30 bg-lofi-dark/60 p-0.5">
+          {([0.5, 1, 1.25, 1.5, 2] as const).map((speed) => (
+            <button
+              key={speed}
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setPlaybackSpeed(speed); }}
+              title={`${speed}×`}
+              className={cn(
+                "min-w-[2.25rem] rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                playbackSpeed === speed
+                  ? "bg-lofi-accent/40 text-lofi-cream"
+                  : "text-lofi-cream/70 hover:bg-lofi-brown/20 hover:text-lofi-cream"
+              )}
+            >
+              {speed}×
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

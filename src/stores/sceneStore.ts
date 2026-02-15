@@ -25,6 +25,10 @@ type SceneState = {
   characterStandVisible: boolean;
   /** 多立绘时，按角色 id 存储当前选中的立绘索引 */
   standIndexByCharacter: Record<string, number>;
+  /** 静态立绘呼吸效果开关（通用设置） */
+  standBreathingEnabled: boolean;
+  /** 动态立绘兼容：当显示黑底时可切换格式（通用设置） */
+  standDynamicFormat: "webm" | "gif" | "avif";
   setScene: (id: string | null) => void;
   setCharacter: (id: CharacterId | null) => void;
   getCharacterDisplay: (characterId: string, sceneId: string) => CharacterDisplay;
@@ -33,6 +37,8 @@ type SceneState = {
   setCharacterStandVisible: (visible: boolean) => void;
   setStandIndex: (characterId: string, index: number) => void;
   getStandIndex: (characterId: string) => number;
+  setStandBreathingEnabled: (enabled: boolean) => void;
+  setStandDynamicFormat: (format: "webm" | "gif" | "avif") => void;
 };
 
 export const useSceneStore = create<SceneState>()(
@@ -45,6 +51,8 @@ export const useSceneStore = create<SceneState>()(
       characterAdjustLocked: true,
       characterStandVisible: true,
       standIndexByCharacter: {},
+      standBreathingEnabled: true,
+      standDynamicFormat: "webm",
       setScene: (id) => set({ currentSceneId: id }),
       setCharacter: (id) => set({ currentCharacterId: id }),
       getCharacterDisplay: (characterId, _sceneId) => {
@@ -86,6 +94,8 @@ export const useSceneStore = create<SceneState>()(
         const idx = get().standIndexByCharacter[characterId];
         return typeof idx === "number" && idx >= 0 ? idx : 0;
       },
+      setStandBreathingEnabled: (enabled) => set({ standBreathingEnabled: enabled }),
+      setStandDynamicFormat: (format) => set({ standDynamicFormat: format }),
     }),
     {
       name: "chillmxmk-scene",
@@ -96,6 +106,8 @@ export const useSceneStore = create<SceneState>()(
         characterAdjustLocked: state.characterAdjustLocked,
         characterStandVisible: state.characterStandVisible,
         standIndexByCharacter: state.standIndexByCharacter,
+        standBreathingEnabled: state.standBreathingEnabled,
+        standDynamicFormat: state.standDynamicFormat,
       }),
       merge: (persisted, current) => {
         const p = persisted as Partial<{
@@ -106,6 +118,8 @@ export const useSceneStore = create<SceneState>()(
           characterAdjustLocked?: boolean;
           characterStandVisible?: boolean;
           standIndexByCharacter?: Record<string, number>;
+          standBreathingEnabled?: boolean;
+          standDynamicFormat?: "webm" | "gif" | "avif";
         }> | undefined;
         const oldWallpaperId = p?.currentWallpaperId;
         const mergedSceneId =
@@ -132,6 +146,8 @@ export const useSceneStore = create<SceneState>()(
           characterAdjustLocked: p?.characterAdjustLocked ?? current.characterAdjustLocked,
           characterStandVisible: p?.characterStandVisible ?? current.characterStandVisible,
           standIndexByCharacter: p?.standIndexByCharacter ?? current.standIndexByCharacter,
+          standBreathingEnabled: p?.standBreathingEnabled ?? current.standBreathingEnabled,
+          standDynamicFormat: p?.standDynamicFormat ?? current.standDynamicFormat,
         };
       },
     }

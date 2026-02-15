@@ -38,21 +38,43 @@
 
 角色配置按「每个角色一个目录」组织，并在统一入口注册。
 
-### 2.1 目录与文件
+### 2.1 目录与文件（每角色一个文件夹，便于后续 zip 包动态导入）
+
+**源码中的配置**（构建时加载）：
 
 ```
 src/config/characters/
-├── index.ts              # 注册表：所有角色 + 各角色剧情列表
+├── index.ts              # 注册表：所有角色 + 各角色剧情（由 loadStories 规范化）
+├── loadStories.ts        # 将 stories.json 中的 segments 转为 lines + lineTimings
 ├── miki/
 │   ├── config.json       # 角色基础信息与立绘/Live2D/语音
-│   └── stories.ts        # 该角色的剧情列表
+│   └── stories.json      # 该角色的剧情列表（JSON，支持 segments）
 ├── hazel/
 │   ├── config.json
-│   └── stories.ts
+│   └── stories.json
 └── 你的角色id/
     ├── config.json
-    └── stories.ts
+    └── stories.json
 ```
+
+**资源与「角色包」结构**（与 `public/characters/<角色id>/` 一致，便于 zip 导入）：
+
+```
+public/characters/
+├── manifest.json         # 可选：{ "characterIds": ["miki", "hazel", ...] }，供动态加载
+├── miki/
+│   ├── config.json       # 与 src 中一致，zip 包可覆盖
+│   ├── stories.json      # 与 src 中一致，zip 包可覆盖
+│   ├── stand / voice / story 等素材
+│   └── ...
+└── hazel/
+    ├── config.json
+    ├── stories.json
+    ├── stand.webm、voice/*.mp3、story/*.mp4 等
+    └── ...
+```
+
+后续若实现「从 zip 动态导入角色」：将 zip 解压到 `public/characters/<新id>/`，并在 manifest 中登记 id 即可（或由运行时扫描目录）。
 
 ### 2.2 角色配置 config.json
 
@@ -96,23 +118,23 @@ src/config/characters/
 
 在 `src/config/characters/index.ts` 中：
 
-1. 引入该角色的 `config.json` 与 `stories`：
-2. 写入 `registry` 与 `storiesByCharacter`：
+1. 引入该角色的 `config.json` 与 `stories.json`；
+2. 用 `normalizeStories` 规范化剧情（将 `segments` 转为 `lines` + `lineTimings`）；
+3. 写入 `registry` 与 `storiesByCharacter`：
 
 ```ts
 import yourConfig from "./你的角色id/config.json";
-import { yourStories } from "./你的角色id/stories";
+import yourStoriesRaw from "./你的角色id/stories.json";
+import { normalizeStories, type RawStory } from "./loadStories";
 
 const registry: Record<string, CharacterConfig> = {
-  miki: mikiConfig as CharacterConfig,
-  hazel: hazelConfig as CharacterConfig,
+  // ...
   your_id: yourConfig as CharacterConfig,
 };
 
 const storiesByCharacter: Record<string, Story[]> = {
-  miki: mikiStories,
-  hazel: hazelStories,
-  your_id: yourStories,
+  // ...
+  your_id: normalizeStories(yourStoriesRaw as RawStory[]),
 };
 ```
 
@@ -122,7 +144,7 @@ const storiesByCharacter: Record<string, Story[]> = {
 
 ## 三、剧情定制
 
-剧情分为 **video**（单视频）和 **galgame**（多镜对话），按角色写在 `src/config/characters/<角色id>/stories.ts` 中。
+剧情分为 **video**（单视频）和 **galgame**（多镜对话），按角色写在 `src/config/characters/<角色id>/stories.json` 中（JSON，便于 zip 包内直接携带与动态导入）。
 
 ### 3.1 类型与触发
 
@@ -135,45 +157,65 @@ const storiesByCharacter: Record<string, Story[]> = {
 
 类型定义见 `src/types/story.ts`。
 
-### 3.2 视频型剧情示例
+### 3.2 视频型剧情示例（stories.json）
 
-```ts
+```json
 {
-  id: "story_diary_first",
-  type: "video",
-  title: "跳跳糖",
-  url: "/characters/miki/story/video/跳跳糖.mp4",
-  trigger: { type: "achievement", achievementId: "diary_first" },
+  "id": "story_diary_first",
+  "type": "video",
+  "title": "跳跳糖",
+  "trigger": { "type": "achievement", "achievementId": "diary_first" },
+  "url": "/characters/miki/story/video/跳跳糖.mp4"
 }
 ```
 
 - 视频文件放在 `public` 下，`url` 用绝对路径如 `/characters/miki/story/video/xxx.mp4`。
 
-### 3.3 Galgame 型剧情示例
+### 3.3 Galgame 型剧情示例（stories.json）
 
-```ts
+**写法一：每镜用 `lines`（无时间轴）**
+
+```json
 {
-  id: "story_first_todo",
-  type: "galgame",
-  title: "第一次待办",
-  trigger: { type: "achievement", achievementId: "first_todo" },
-  scenes: [
+  "id": "story_first_todo",
+  "type": "galgame",
+  "title": "第一次待办",
+  "trigger": { "type": "achievement", "achievementId": "first_todo" },
+  "scenes": [
     {
-      background: "/story/bg_room.png",  // 可选
-      character: "miki",
-      position: "left",                   // "left" | "center" | "right"
-      lines: ["你添加了第一条待办呢。", "以后一起把任务都勾掉吧。"],
-    },
-    {
-      character: "miki",
-      position: "center",
-      lines: ["……"],
-    },
-  ],
+      "character": "miki",
+      "position": "left",
+      "lines": ["你添加了第一条待办呢。", "以后一起把任务都勾掉吧。"]
+    }
+  ]
 }
 ```
 
-- 每镜可单独指定 `background`、`character`、`position`；`lines` 为当前镜的对话数组，点击/按键逐句推进。
+**写法二：带整段音频 + 每句时间轴，用 `segments`（推荐）**
+
+一镜内若需与一条音频逐句对齐，可用 `segments` 替代 `lines` + `lineTimings`，加载时会自动规范化为 `lines` 与 `lineTimings`：
+
+```json
+{
+  "id": "story_heartmem",
+  "type": "galgame",
+  "title": "一辈子不会有交集的人",
+  "trigger": { "type": "achievement", "achievementId": "diary_first" },
+  "scenes": [
+    {
+      "character": "hazel",
+      "position": "center",
+      "audioUrl": "/characters/hazel/story/heartmem/heartmem.mp3",
+      "segments": [
+        { "text": "第一句台词", "startMs": 0, "endMs": 3200 },
+        { "text": "第二句台词", "startMs": 3200, "endMs": 5100 }
+      ]
+    }
+  ]
+}
+```
+
+- 每镜可单独指定 `background`、`character`、`position`；`lines` 为当前镜的对话数组，点击/按键逐句推进。带 `audioUrl` 时可用 `segments` 或 `lines` + `lineTimings`。
 
 ### 3.4 与成就的绑定
 

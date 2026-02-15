@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useSceneStore } from "@/stores/sceneStore";
 import { getCharacterConfig } from "@/config/characters";
 import { getAssetUrl, cn } from "@/lib/utils";
-import { isStandVideo } from "@/lib/standMedia";
+import { isStandVideo, getStandUrlForFormat } from "@/lib/standMedia";
 import { usePlayVoice } from "@/lib/voice";
 import { Live2DViewer } from "./Live2DViewer";
 
@@ -35,6 +35,8 @@ export function CharacterView() {
   const characterAdjustLocked = useSceneStore((s) => s.characterAdjustLocked);
   const setCharacterDisplay = useSceneStore((s) => s.setCharacterDisplay);
   const getStandIndex = useSceneStore((s) => s.getStandIndex);
+  const standBreathingEnabled = useSceneStore((s) => s.standBreathingEnabled);
+  const standDynamicFormat = useSceneStore((s) => s.standDynamicFormat);
 
   const display = getDisplayFromStore(characterDisplay, characterId);
   const config = characterId ? getCharacterConfig(characterId) : null;
@@ -154,41 +156,53 @@ export function CharacterView() {
           />
         </div>
       ) : effectiveStand ? (
-        <div
-          className={cn(
-            "relative h-full max-w-full aspect-[2/3] character-stand select-none min-w-0",
-            isStandVideo(effectiveStand) && "bg-transparent character-stand--video"
-          )}
-          style={{
-            minWidth: 0,
-            userSelect: "none",
-            ...({ WebkitUserDrag: "none" } as React.CSSProperties),
-          }}
-          onDragStart={(e) => e.preventDefault()}
-        >
-          {isStandVideo(effectiveStand) ? (
-            <video
-              src={getAssetUrl(effectiveStand)}
-              className="h-full w-full object-contain object-bottom pointer-events-none bg-transparent"
-              autoPlay
-              loop
-              muted
-              playsInline
-              draggable={false}
-            />
-          ) : (
-            <Image
-              src={getAssetUrl(effectiveStand)}
-              alt={config.name}
-              fill
-              className="object-contain object-bottom pointer-events-none"
-              sizes="50vw"
-              unoptimized
-              draggable={false}
+        (() => {
+          const isVideo = isStandVideo(effectiveStand);
+          const useVideoRender = isVideo && standDynamicFormat === "webm";
+          const standSrc = useVideoRender
+            ? effectiveStand
+            : isVideo
+              ? getStandUrlForFormat(effectiveStand, standDynamicFormat)
+              : effectiveStand;
+          return (
+            <div
+              className={cn(
+                "relative h-full max-w-full aspect-[2/3] character-stand select-none min-w-0",
+                useVideoRender && "bg-transparent character-stand--video",
+                !isVideo && !standBreathingEnabled && "character-stand--no-breathe"
+              )}
+              style={{
+                minWidth: 0,
+                userSelect: "none",
+                ...({ WebkitUserDrag: "none" } as React.CSSProperties),
+              }}
               onDragStart={(e) => e.preventDefault()}
-            />
-          )}
-        </div>
+            >
+              {useVideoRender ? (
+                <video
+                  src={getAssetUrl(standSrc)}
+                  className="h-full w-full object-contain object-bottom pointer-events-none bg-transparent"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  draggable={false}
+                />
+              ) : (
+                <Image
+                  src={getAssetUrl(standSrc)}
+                  alt={config.name}
+                  fill
+                  className="object-contain object-bottom pointer-events-none"
+                  sizes="50vw"
+                  unoptimized
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                />
+              )}
+            </div>
+          );
+        })()
       ) : (
         <div className="flex h-full max-w-[50%] items-center justify-center text-lofi-cream/50 text-sm">
           {config.name} 立绘占位

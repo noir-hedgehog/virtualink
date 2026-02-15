@@ -38,6 +38,11 @@ body {
   animation: none;
 }
 
+/* 关闭静态立绘呼吸效果时使用 */
+.character-stand.character-stand--no-breathe {
+  animation: none;
+}
+
 /* 来电提示轻微震动（模仿电话） */
 @keyframes call-shake {
   0%, 100% {
