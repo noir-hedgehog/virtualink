@@ -18,27 +18,27 @@
             "text": "不要这样干嘛，不要这样干了"
         },
         "diary_first_open": {
-            "url": "/characters/hazel/voice/diary_first_open.MP3",
+            "url": "/characters/hazel/voice/diary_first_open.mp3",
             "text": "还不是那种关系哦"
         },
         "todo_add": {
-            "url": "/characters/hazel/voice/todo_add.MP3",
+            "url": "/characters/hazel/voice/todo_add.mp3",
             "text": "这也太那个了吧"
         },
         "pomodoro_10min": {
-            "url": "/characters/hazel/voice/pomodoro_10min.MP3",
+            "url": "/characters/hazel/voice/pomodoro_10min.mp3",
             "text": "还有最后10分钟就可以下播了"
         },
         "exit": {
-            "url": "/characters/hazel/voice/exit.MP3",
+            "url": "/characters/hazel/voice/exit.mp3",
             "text": "那我等会就滚了"
         },
         "calendar_open": {
-            "url": "/characters/hazel/voice/calendar_open.MP3",
+            "url": "/characters/hazel/voice/calendar_open.mp3",
             "text": "因为就是没有准备好"
         },
         "stand_tap_2": {
-            "url": "/characters/hazel/voice/stand_tap_2.MP3",
+            "url": "/characters/hazel/voice/stand_tap_2.mp3",
             "text": "额咦"
         }
     },
