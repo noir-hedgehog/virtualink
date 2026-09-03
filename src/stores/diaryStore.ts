@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { createId } from "@/lib/utils";
 
 export type DiaryEntry = {
   id: string;
@@ -39,7 +40,7 @@ export const useDiaryStore = create<DiaryState>()(
             entries: [
               ...s.entries,
               {
-                id: crypto.randomUUID(),
+                id: createId(),
                 date,
                 content,
                 createdAt: now,

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { createId } from "@/lib/utils";
 
 export type HabitItem = {
   id: string;
@@ -35,7 +36,7 @@ export const useHabitsStore = create<HabitsState>()(
           habits: [
             ...s.habits,
             {
-              id: crypto.randomUUID(),
+              id: createId(),
               name,
               color: color ?? defaultColors[s.habits.length % defaultColors.length],
               createdAt: new Date().toISOString(),
