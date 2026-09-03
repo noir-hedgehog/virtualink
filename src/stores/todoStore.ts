@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { createId } from "@/lib/utils";
 
 export type TodoItem = {
   id: string;
@@ -25,7 +26,7 @@ export const useTodoStore = create<TodoState>()(
           items: [
             ...s.items,
             {
-              id: crypto.randomUUID(),
+              id: createId(),
               title,
               done: false,
               createdAt: new Date().toISOString(),

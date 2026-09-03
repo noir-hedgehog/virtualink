@@ -5,11 +5,14 @@ import {
   CheckSquare,
   BookOpen,
   Calendar,
+  ContactRound,
   Eye,
   EyeOff,
   Settings,
   Phone,
 } from "lucide-react";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { getCharacterConfig } from "@/config/characters";
 import { getAssetUrl, cn } from "@/lib/utils";
 import { usePlayVoice } from "@/lib/voice";
@@ -42,6 +45,7 @@ const items: Array<{
 ];
 
 export function FloatingSidebar() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const openModal = useModalStore((s) => s.openModal);
   const open = useModalStore((s) => s.open);
   const openWidget = useWidgetStore((s) => s.openWidget);
@@ -51,6 +55,22 @@ export function FloatingSidebar() {
   const setCharacterStandVisible = useSceneStore((s) => s.setCharacterStandVisible);
   const currentCharacterId = useSceneStore((s) => s.currentCharacterId);
   const playVoice = usePlayVoice();
+
+  const refreshAuth = useCallback(async () => {
+    try {
+      const response = await fetch("/api/auth/status", { cache: "no-store" });
+      const status = response.ok ? await response.json() as { authenticated?: boolean } : null;
+      setIsAuthenticated(Boolean(status?.authenticated));
+    } catch {
+      setIsAuthenticated(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshAuth();
+    window.addEventListener("virtualink-auth-changed", refreshAuth);
+    return () => window.removeEventListener("virtualink-auth-changed", refreshAuth);
+  }, [refreshAuth]);
 
   const isWidgetVisible = (id: string) =>
     widgetIds.includes(id as WidgetId) && widgets[id as WidgetId]?.visible;
@@ -71,6 +91,16 @@ export function FloatingSidebar() {
 
   return (
     <div className="absolute right-6 top-1/2 flex -translate-y-1/2 flex-col gap-2 rounded-xl border border-lofi-brown/20 bg-lofi-dark/60 p-2 shadow-lg backdrop-blur-sm">
+      {isAuthenticated && (
+        <Link
+          href="/passport"
+          className={floatButtonClass}
+          title="AI Passport 伴侣"
+          aria-label="AI Passport 伴侣"
+        >
+          <ContactRound className="h-5 w-5" />
+        </Link>
+      )}
       {items.map(({ id, icon: Icon, iconHidden, label, labelHidden, isWidget }) => {
         const isHide = id === "hide";
         const showHiddenState = isHide && !characterStandVisible;

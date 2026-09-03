@@ -13,6 +13,8 @@ import { ChevronDown, Settings, X } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { CloudSyncControl } from "@/components/sync/CloudSyncControl";
+import Link from "next/link";
 
 const RIPPLE_DURATION_MS = 900;
 
@@ -32,11 +34,28 @@ export function LaunchPage() {
   const [selectedId, setSelectedId] = useState<string | null>("miki");
   const [showVersion, setShowVersion] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [rippleProgress, setRippleProgress] = useState(0);
   const pendingCharacterIdRef = useRef<string>("miki");
   const completeLaunch = useLaunchStore((s) => s.completeLaunch);
   const characters = listCharacters();
+
+  const refreshAuth = useCallback(async () => {
+    try {
+      const response = await fetch("/api/auth/status", { cache: "no-store" });
+      const status = response.ok ? await response.json() as { authenticated?: boolean } : null;
+      setIsAuthenticated(Boolean(status?.authenticated));
+    } catch {
+      setIsAuthenticated(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshAuth();
+    window.addEventListener("virtualink-auth-changed", refreshAuth);
+    return () => window.removeEventListener("virtualink-auth-changed", refreshAuth);
+  }, [refreshAuth]);
 
   const commitLinkStart = useCallback((characterId: string) => {
     const isFirstTime = completeLaunch(characterId);
@@ -108,6 +127,16 @@ export function LaunchPage() {
             <p className="mt-1.5 text-sm text-lofi-cream/60">真实连结：与你相伴的日常</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <CloudSyncControl />
+            {isAuthenticated && (
+              <Link
+                href="/passport"
+                className="rounded-lg px-2 py-2 text-sm text-lofi-cream/70 hover:bg-white/10 hover:text-lofi-cream"
+                title="AI Passport 伴侣"
+              >
+                Passport
+              </Link>
+            )}
             <button
               type="button"
               onClick={() => setShowSettings((v) => !v)}
