@@ -1,3 +1,4 @@
+import { accountStorage } from "@/lib/sync/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { createId } from "@/lib/utils";
@@ -55,6 +56,6 @@ export const useDiaryStore = create<DiaryState>()(
       remove: (id) =>
         set((s) => ({ entries: s.entries.filter((e) => e.id !== id) })),
     }),
-    { name: "chillmxmk-diary" }
+    { storage: accountStorage, name: "chillmxmk-diary" }
   )
 );

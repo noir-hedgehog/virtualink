@@ -1,3 +1,4 @@
+import { accountStorage } from "@/lib/sync/storage";
 /**
  * 剧情 Store（按角色）：已解锁剧情、触发与回放
  * @see docs/STORY_AND_ACHIEVEMENTS.md
@@ -102,7 +103,7 @@ export const useStoryStore = create<StoryState>()(
       getAllStories: (characterId) => getStories(characterId),
     }),
     {
-      name: "chillmxmk-story",
+      storage: accountStorage, name: "chillmxmk-story",
       partialize: (s) => ({ unlockedIdsByCharacter: s.unlockedIdsByCharacter }),
       merge: (persisted, current) => ({
         ...current,

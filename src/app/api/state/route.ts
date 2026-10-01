@@ -14,6 +14,9 @@ function accessDenied(request: NextRequest): NextResponse | SessionUser {
   if (!user) {
     return NextResponse.json({ error: "需要登录。" }, { status: 401 });
   }
+  if (request.headers.get("X-Virtualink-Owner") !== user.id) {
+    return NextResponse.json({ error: "账号已更改，请重新加载。" }, { status: 409 });
+  }
   return user;
 }
 
@@ -21,7 +24,7 @@ export async function GET(request: NextRequest) {
   const access = accessDenied(request);
   if (access instanceof NextResponse) return access;
   return NextResponse.json(
-    { document: await readUserState(access.id) },
+    { ownerId: access.id, document: await readUserState(access.id) },
     { headers: { "Cache-Control": "no-store" } }
   );
 }
@@ -34,5 +37,5 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "同步数据格式无效。" }, { status: 400 });
   }
   const document = await writeUserState(access.id, body.document);
-  return NextResponse.json({ document }, { headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json({ ownerId: access.id, document }, { headers: { "Cache-Control": "no-store" } });
 }

@@ -1,3 +1,4 @@
+import { accountStorage } from "@/lib/sync/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { createId } from "@/lib/utils";
@@ -71,6 +72,6 @@ export const useHabitsStore = create<HabitsState>()(
       getChecksForDate: (date) =>
         get().checks.filter((c) => c.date === date),
     }),
-    { name: "chillmxmk-habits" }
+    { storage: accountStorage, name: "chillmxmk-habits" }
   )
 );

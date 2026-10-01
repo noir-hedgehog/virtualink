@@ -1,3 +1,4 @@
+import { AccountBoundary } from "@/components/sync/AccountBoundary";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 import "./globals.css";
@@ -35,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable}`}>
       <body className="min-h-screen overflow-hidden font-sans">
-        {children}
+        <AccountBoundary>{children}</AccountBoundary>
       </body>
     </html>
   );

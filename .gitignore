@@ -6,3 +6,5 @@ out
 *.log
 npm-debug.log*
 .cursor
+
+.npm-cache/

@@ -1,3 +1,4 @@
+import { accountStorage } from "@/lib/sync/storage";
 /**
  * 开发者日志：剧情解锁、成就触发、亲密度变化等记录，供设置内查询
  */
@@ -65,6 +66,6 @@ export const useDevLogStore = create<DevLogState>()(
 
       clearLogs: () => set({ entries: [] }),
     }),
-    { name: "chillmxmk-devlog" }
+    { storage: accountStorage, name: "chillmxmk-devlog" }
   )
 );

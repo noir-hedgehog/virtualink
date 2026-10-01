@@ -1,3 +1,4 @@
+import { accountStorage } from "@/lib/sync/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { AMBIENT_NONE } from "@/config/ambientSounds";
@@ -13,6 +14,6 @@ export const useAmbientSoundStore = create<AmbientSoundState>()(
       ambientSoundId: AMBIENT_NONE,
       setAmbientSound: (id) => set({ ambientSoundId: id }),
     }),
-    { name: "chillmxmk-ambient" }
+    { storage: accountStorage, name: "chillmxmk-ambient" }
   )
 );

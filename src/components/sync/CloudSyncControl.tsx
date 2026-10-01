@@ -4,11 +4,13 @@ import Link from "next/link";
 import { LogOut, UserRound, X } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 
+import { authChanging, authChanged, hasGuestData, importGuestData, selectOwner } from "@/lib/sync/storage";
+
 type AuthStatus = {
   configured: boolean;
   authenticated: boolean;
   hasAccounts: boolean;
-  user: { username: string } | null;
+  user: { id: string; username: string } | null;
 };
 type AuthMode = "login" | "register";
 
@@ -45,28 +47,36 @@ export function CloudSyncControl() {
       setMessage("两次输入的密码不一致。");
       return;
     }
-    const response = await fetch(`/api/auth/${mode}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-    if (!response.ok) {
-      const body = await response.json().catch(() => null) as { error?: string } | null;
-      setMessage(body?.error ?? "无法连接账号服务。");
-      return;
-    }
-    setPassword("");
-    setConfirmPassword("");
-    setMessage(mode === "register" ? "注册成功，已登录并启用私有同步。" : "登录成功，已启用私有同步。");
-    await refresh();
-    window.dispatchEvent(new Event("virtualink-auth-changed"));
+    authChanging();
+    try {
+      const response = await fetch(`/api/auth/${mode}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null) as { error?: string } | null;
+        setMessage(body?.error ?? "无法连接账号服务。");
+        return;
+      }
+      const result = await response.json() as { user: { id: string } };
+      selectOwner(result.user.id);
+      setPassword(""); setConfirmPassword("");
+      setMessage(mode === "register" ? "注册成功，已登录并启用私有同步。" : "登录成功，已启用私有同步。");
+      await refresh();
+    } catch { setMessage("无法连接账号服务，请重试。"); }
+    finally { authChanged(); }
   };
 
   const logout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setMessage("已退出账号；浏览器中的本地数据不会被删除。");
-    await refresh();
-    window.dispatchEvent(new Event("virtualink-auth-changed"));
+    authChanging();
+    try {
+      const response = await fetch("/api/auth/logout", { method: "POST" });
+      if (!response.ok) { setMessage("退出失败，请重试。"); return; }
+      selectOwner(null);
+      setMessage("已退出；账号数据独立保留在当前浏览器。");
+      await refresh();
+    } catch { setMessage("退出失败，请重试。"); }
+    finally { authChanged(); }
   };
 
   return (
@@ -121,6 +131,13 @@ export function CloudSyncControl() {
               <Link href="/passport" className="rounded-lg border border-lofi-accent/60 px-3 py-2 text-lofi-accent hover:bg-lofi-accent/15">Passport</Link>
               <button type="button" onClick={logout} className="inline-flex items-center gap-2 rounded-lg border border-lofi-brown/40 px-3 py-2 text-lofi-cream/80 hover:bg-white/10"><LogOut className="h-4 w-4" />退出</button>
             </div>
+          )}
+          {status?.authenticated && hasGuestData() && (
+            <button type="button" onClick={async () => {
+              if (window.confirm("将未登录时的本地数据导入当前账号？仅填充缺失项目，不覆盖账号记录；原本地副本会保留。")) {
+                try { await importGuestData(); } catch { setMessage("无法读取账号数据，请稍后重试导入。"); }
+              }
+            }} className="mt-3 text-xs text-lofi-accent">导入未登录时的本地数据</button>
           )}
           {status && !status.configured && <p className="mt-4 text-xs text-lofi-cream/55">此本机静态预览尚未配置服务器同步。</p>}
           {message && <p className="mt-3 text-xs text-lofi-accent">{message}</p>}

@@ -1,117 +1,85 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
-import { SYNC_STORAGE_KEYS, type StateDocument } from "@/lib/sync/schema";
+import { useEffect } from "react";
+import { fingerprint, isStateDocument, type StateDocument } from "@/lib/sync/schema";
+import { AUTH_EPOCH_KEY, OWNER_KEY, applyDocument, authPending, canWrite, createDocument, currentOwner, epoch, selectOwner, storageKey } from "@/lib/sync/storage";
 
-type SyncResponse = { document: StateDocument | null };
-
-function createDocument(): StateDocument {
-  const records: StateDocument["records"] = {};
-  for (const key of SYNC_STORAGE_KEYS) {
-    const value = window.localStorage.getItem(key);
-    if (value !== null) records[key] = value;
-  }
-  return { version: 1, updatedAt: new Date().toISOString(), records };
-}
-
-function fingerprint(document: StateDocument): string {
-  return JSON.stringify(document.records);
-}
-
-function applyDocument(document: StateDocument): boolean {
-  let changed = false;
-  for (const key of SYNC_STORAGE_KEYS) {
-    const remoteValue = document.records[key];
-    const localValue = window.localStorage.getItem(key);
-    if (typeof remoteValue === "string" && remoteValue !== localValue) {
-      window.localStorage.setItem(key, remoteValue);
-      changed = true;
-    }
-  }
-  return changed;
-}
+type SyncResponse = { ownerId: string; document: StateDocument | null };
 
 export function CloudSync() {
-  const submittedFingerprint = useRef<string | null>(null);
-  const syncing = useRef(false);
-
-  const push = useCallback(async (document: StateDocument) => {
-    const response = await fetch("/api/state", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ document }),
-    });
-    if (!response.ok) throw new Error("sync_write_failed");
-    submittedFingerprint.current = fingerprint(document);
-  }, []);
-
-  const sync = useCallback(async () => {
-    if (syncing.current) return;
-    syncing.current = true;
-    try {
-      const status = await fetch("/api/auth/status", { cache: "no-store" });
-      if (!status.ok) return;
-      const auth = await status.json() as { authenticated?: boolean };
-      if (!auth.authenticated) return;
-
-      const local = createDocument();
-      const localFingerprint = fingerprint(local);
-      const response = await fetch("/api/state", { cache: "no-store" });
-      if (!response.ok) return;
-      const payload = await response.json() as SyncResponse;
-      if (!payload.document) {
-        await push(local);
-        return;
-      }
-
-      const remoteFingerprint = fingerprint(payload.document);
-      if (submittedFingerprint.current === null) {
-        // A newly provisioned account has an empty document. Preserve any
-        // existing browser-local history by making it the first server copy.
-        if (
-          Object.keys(payload.document.records).length === 0 &&
-          Object.keys(local.records).length > 0
-        ) {
-          await push(local);
+  useEffect(() => {
+    let running = false;
+    let stopped = false;
+    let controller = new AbortController();
+    const invalidate = () => { controller.abort(); controller = new AbortController(); };
+    const sync = async () => {
+      if (running || stopped || authPending()) return;
+      running = true;
+      const token = epoch();
+      const signal = controller.signal;
+      const valid = () => !stopped && !signal.aborted && epoch() === token && canWrite();
+      try {
+        const status = await fetch("/api/auth/status", { cache: "no-store", signal });
+        if (!status.ok || !valid()) return;
+        const auth = await status.json() as { authenticated: boolean; user: { id: string } | null };
+        if (!valid()) return;
+        const id = auth.authenticated ? auth.user?.id ?? null : null;
+        if (selectOwner(id) || !id) return;
+        const headers = { "X-Virtualink-Owner": id };
+        const response = await fetch("/api/state", { cache: "no-store", headers, signal });
+        if (!response.ok || !valid()) return;
+        const payload = await response.json() as SyncResponse;
+        if (!valid() || payload.ownerId !== currentOwner()) return;
+        if (payload.document !== null && !isStateDocument(payload.document)) return;
+        const local = createDocument();
+        const localFingerprint = fingerprint(local);
+        const baselineKey = storageKey("sync-baseline");
+        const baseline = window.localStorage.getItem(baselineKey);
+        // Only this stable account's namespace may bootstrap a missing server
+        // document. Unclaimed guest/legacy records stay untouched until import.
+        if ((baseline !== null && localFingerprint !== baseline) || payload.document === null) {
+          const put = await fetch("/api/state", {
+            method: "PUT", headers: { ...headers, "Content-Type": "application/json" },
+            body: JSON.stringify({ document: local }), signal,
+          });
+          if (put.ok && valid()) {
+            const result = await put.json() as SyncResponse;
+            if (valid() && result.ownerId === id) window.localStorage.setItem(baselineKey, localFingerprint);
+          }
+          return;
+        }
+        const remoteFingerprint = fingerprint(payload.document);
+        if (baseline === null && Object.keys(payload.document.records).length === 0 && Object.keys(local.records).length > 0) {
+          // Record a baseline, then the next pass uploads account-owned data.
+          window.localStorage.setItem(baselineKey, remoteFingerprint);
           return;
         }
         const changed = applyDocument(payload.document);
-        submittedFingerprint.current = remoteFingerprint;
+        window.localStorage.setItem(baselineKey, remoteFingerprint);
         if (changed) window.location.reload();
-        return;
-      }
-
-      if (localFingerprint === submittedFingerprint.current && remoteFingerprint !== localFingerprint) {
-        if (applyDocument(payload.document)) window.location.reload();
-        submittedFingerprint.current = remoteFingerprint;
-        return;
-      }
-      if (localFingerprint !== submittedFingerprint.current) await push(local);
-    } catch {
-      // Offline or an unavailable private server: browser-local persistence still works.
-    } finally {
-      syncing.current = false;
-    }
-  }, [push]);
-
-  useEffect(() => {
+      } catch {
+        // Offline persistence remains scoped to the account; retry next pass.
+      } finally { running = false; }
+    };
+    const changed = () => { invalidate(); void sync(); };
+    const storageChanged = (event: StorageEvent) => {
+      if (event.key === AUTH_EPOCH_KEY) changed();
+      if (event.key === OWNER_KEY && !canWrite()) { invalidate(); window.location.reload(); }
+    };
+    const visibility = () => { if (document.visibilityState === "visible") void sync(); };
     void sync();
     const interval = window.setInterval(() => void sync(), 10_000);
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") void sync();
-    };
-    const onAuthChanged = () => {
-      submittedFingerprint.current = null;
-      void sync();
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("virtualink-auth-changed", onAuthChanged);
+    window.addEventListener("virtualink-auth-changing", invalidate);
+    window.addEventListener("virtualink-auth-changed", changed);
+    window.addEventListener("storage", storageChanged);
+    document.addEventListener("visibilitychange", visibility);
     return () => {
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("virtualink-auth-changed", onAuthChanged);
+      stopped = true; invalidate(); window.clearInterval(interval);
+      window.removeEventListener("virtualink-auth-changing", invalidate);
+      window.removeEventListener("virtualink-auth-changed", changed);
+      window.removeEventListener("storage", storageChanged);
+      document.removeEventListener("visibilitychange", visibility);
     };
-  }, [sync]);
-
+  }, []);
   return null;
 }

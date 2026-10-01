@@ -1,3 +1,4 @@
+import { accountStorage } from "@/lib/sync/storage";
 /**
  * 成就 Store（按角色）：已解锁成就列表，检查并解锁
  * @see docs/STORY_AND_ACHIEVEMENTS.md
@@ -123,7 +124,7 @@ export const useAchievementStore = create<AchievementState>()(
       },
     }),
     {
-      name: "chillmxmk-achievements",
+      storage: accountStorage, name: "chillmxmk-achievements",
       partialize: (s) => ({ unlockedIdsByCharacter: s.unlockedIdsByCharacter }),
       merge: (persisted, current) => ({
         ...current,

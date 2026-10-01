@@ -1,3 +1,4 @@
+import { accountStorage } from "@/lib/sync/storage";
 /**
  * 亲密度（隐性、按角色）：不对外展示，用于随机剧情触发
  * @see docs/STORY_AND_ACHIEVEMENTS.md
@@ -60,7 +61,7 @@ export const useIntimacyStore = create<IntimacyState>()(
       },
     }),
     {
-      name: "chillmxmk-intimacy",
+      storage: accountStorage, name: "chillmxmk-intimacy",
       partialize: (s) => ({ pointsByCharacter: s.pointsByCharacter }),
       merge: (persisted, current) => ({
         ...current,
