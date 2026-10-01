@@ -30,6 +30,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Regression tests
+        run: npm test
+
+      - name: Type and shell checks
+        run: |
+          npm run typecheck
+          bash -n ops/virtualink-deploy.sh ops/virtualink-deploy-release.sh
+
       - name: Build application
         run: npm run build
 
@@ -40,8 +48,5 @@ jobs:
     environment:
       name: production
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Deploy to Ubuntu
-        run: sudo /usr/local/sbin/virtualink-deploy "$GITHUB_SHA" "$GITHUB_WORKSPACE"
+      - name: Deploy administrator-approved main revision
+        run: sudo /usr/local/sbin/virtualink-deploy

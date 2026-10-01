@@ -4,3 +4,6 @@ out
 .git
 .env
 npm-debug.log*
+
+.npm-cache
+tests
