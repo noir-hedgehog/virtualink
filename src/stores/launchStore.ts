@@ -1,3 +1,4 @@
+import { accountStorage } from "@/lib/sync/storage";
 /**
  * 启动页状态：是否已完成「Link Start」、已连线（首次见面）过的角色
  */
@@ -36,7 +37,7 @@ export const useLaunchStore = create<LaunchState>()(
       },
       exitToLaunchPage: () => set({ launchCompleted: false }),
     }),
-    { name: "chillmxmk-launch" }
+    { storage: accountStorage, name: "chillmxmk-launch" }
   )
 );
 

@@ -1,3 +1,4 @@
+import { accountStorage } from "@/lib/sync/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useDevLogStore } from "./devLogStore";
@@ -76,7 +77,7 @@ export const useWidgetStore = create<WidgetsState>()(
         })),
     }),
     {
-      name: "chillmxmk-widgets",
+      storage: accountStorage, name: "chillmxmk-widgets",
       partialize: (state) => ({
         widgets: state.widgets,
       }),

@@ -1,3 +1,4 @@
+import { accountStorage } from "@/lib/sync/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -12,6 +13,6 @@ export const useVoiceTriggerStore = create<VoiceTriggerState>()(
       diaryFirstOpenPlayed: false,
       setDiaryFirstOpenPlayed: (v) => set({ diaryFirstOpenPlayed: v }),
     }),
-    { name: "chillmxmk-voice-triggers" }
+    { storage: accountStorage, name: "chillmxmk-voice-triggers" }
   )
 );

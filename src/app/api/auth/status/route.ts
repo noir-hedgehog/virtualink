@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     {
       configured,
       authenticated: Boolean(user),
-      user: user ? { username: user.username } : null,
+      user: user ? { id: user.id, username: user.username } : null,
       hasAccounts: configured ? await hasAccounts() : false,
     },
     { headers: { "Cache-Control": "no-store" } }

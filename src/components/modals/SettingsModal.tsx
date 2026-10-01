@@ -1,5 +1,6 @@
 "use client";
 
+import { canWrite, storageKey } from "@/lib/sync/storage";
 import { Modal } from "@/components/ui/Modal";
 import { ambientSoundOptions } from "@/config/ambientSounds";
 import type { DevLogEntry } from "@/stores/devLogStore";
@@ -69,7 +70,8 @@ function DeveloperToolsTab() {
       setConfirmClear(true);
       return;
     }
-    DEV_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+    if (!canWrite()) return;
+    DEV_STORAGE_KEYS.forEach((key) => localStorage.removeItem(storageKey(key)));
     clearLogs();
     setConfirmClear(false);
     window.location.reload();

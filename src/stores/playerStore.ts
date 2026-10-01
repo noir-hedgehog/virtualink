@@ -1,3 +1,4 @@
+import { accountStorage } from "@/lib/sync/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Track } from "@/config/playlist";
@@ -120,7 +121,7 @@ export const usePlayerStore = create<PlayerState>()(
       },
     }),
     {
-      name: "chillmxmk-player",
+      storage: accountStorage, name: "chillmxmk-player",
       partialize: (state) => ({
         volume: state.volume,
         savedVolumeBeforeMute: state.savedVolumeBeforeMute,

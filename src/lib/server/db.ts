@@ -7,15 +7,21 @@ declare global {
   var virtualinkSchemaPromise: Promise<void> | undefined;
 }
 
-function databaseUrl(): string {
-  const value = process.env.DATABASE_URL;
-  if (!value) throw new Error("DATABASE_URL is not configured");
-  return value;
+export function databaseConfig(env: NodeJS.ProcessEnv = process.env) {
+  // Explicit PG fields take precedence; passwords remain raw strings, not URI syntax.
+  if (env.PGHOST) {
+    if (!env.PGDATABASE || !env.PGUSER || !env.PGPASSWORD) throw new Error("PG connection fields are incomplete");
+    const port = Number(env.PGPORT ?? "5432");
+    if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("PGPORT is invalid");
+    return { host: env.PGHOST, port, database: env.PGDATABASE, user: env.PGUSER, password: env.PGPASSWORD, max: 5 };
+  }
+  if (!env.DATABASE_URL) throw new Error("Database connection is not configured");
+  return { connectionString: env.DATABASE_URL, max: 5 };
 }
 
 export function getPool(): Pool {
   if (!globalThis.virtualinkPool) {
-    globalThis.virtualinkPool = new Pool({ connectionString: databaseUrl(), max: 5 });
+    globalThis.virtualinkPool = new Pool(databaseConfig());
   }
   return globalThis.virtualinkPool;
 }

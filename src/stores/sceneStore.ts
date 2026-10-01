@@ -1,3 +1,4 @@
+import { accountStorage } from "@/lib/sync/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useDevLogStore } from "./devLogStore";
@@ -98,7 +99,7 @@ export const useSceneStore = create<SceneState>()(
       setStandDynamicFormat: (format) => set({ standDynamicFormat: format }),
     }),
     {
-      name: "chillmxmk-scene",
+      storage: accountStorage, name: "chillmxmk-scene",
       partialize: (state) => ({
         currentSceneId: state.currentSceneId,
         currentCharacterId: state.currentCharacterId,

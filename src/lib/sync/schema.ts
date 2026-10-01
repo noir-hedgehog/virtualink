@@ -43,3 +43,8 @@ export function isStateDocument(value: unknown): value is StateDocument {
   }
   return totalBytes <= MAX_DOCUMENT_BYTES;
 }
+
+// Stable wire ordering; metadata is intentionally excluded.
+export function fingerprint(document: StateDocument): string {
+  return JSON.stringify(SYNC_STORAGE_KEYS.map((key) => [key, document.records[key] ?? null]));
+}

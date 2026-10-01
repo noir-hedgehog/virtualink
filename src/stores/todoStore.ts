@@ -1,3 +1,4 @@
+import { accountStorage } from "@/lib/sync/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { createId } from "@/lib/utils";
@@ -49,6 +50,6 @@ export const useTodoStore = create<TodoState>()(
           items: s.items.map((i) => (i.id === id ? { ...i, title } : i)),
         })),
     }),
-    { name: "chillmxmk-todo" }
+    { storage: accountStorage, name: "chillmxmk-todo" }
   )
 );

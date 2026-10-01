@@ -1,3 +1,4 @@
+import { accountStorage } from "@/lib/sync/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -104,6 +105,6 @@ export const usePomodoroStore = create<PomodoroState>()(
         set({ phase: nextPhase, remainingSeconds: nextSeconds });
       },
     }),
-    { name: "chillmxmk-pomodoro" }
+    { storage: accountStorage, name: "chillmxmk-pomodoro" }
   )
 );
